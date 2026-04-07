@@ -1,7 +1,8 @@
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing::info;
+use crate::domain::error::AppError;
 
-pub async fn create_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
+pub async fn create_pool(database_url: &str) -> Result<PgPool, AppError> {
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .min_connections(5)
@@ -12,7 +13,7 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
     Ok(pool)
 }
 
-pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn run_migrations(pool: &PgPool) -> Result<(), AppError> {
     info!("running database migrations");
     sqlx::migrate!().run(pool).await?;
     info!("migrations completed");

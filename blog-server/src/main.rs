@@ -1,4 +1,4 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use actix_web::{App, HttpServer};
 use tracing::{error, info};
 use crate::domain::error::AppError;
 use crate::handlers::hello;
@@ -11,14 +11,10 @@ mod infrasturcture;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    let config = AppConfig::from_env().expect("invalid configuration");
+    let config = AppConfig::from_env()?;
 
-    let pool = create_pool(&config.database_url)
-        .await
-        .expect("failed to connect to database");
-    run_migrations(&pool)
-        .await
-        .expect("failed to run migrations");
+    let pool = create_pool(&config.database_url).await?;
+    run_migrations(&pool).await?;
 
     let rest = tokio::spawn({
         async move { run_server().await }
