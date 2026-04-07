@@ -1,10 +1,25 @@
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use tracing::{error, info};
 use crate::domain::error::AppError;
+use crate::handlers::hello;
+use crate::infrasturcture::config::AppConfig;
+use crate::infrasturcture::database::{create_pool, run_migrations};
+
 mod domain;
+mod handlers;
+mod infrasturcture;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
+    let config = AppConfig::from_env().expect("invalid configuration");
+
+    let pool = create_pool(&config.database_url)
+        .await
+        .expect("failed to connect to database");
+    run_migrations(&pool)
+        .await
+        .expect("failed to run migrations");
+
     let rest = tokio::spawn({
         async move { run_server().await }
     });
@@ -21,10 +36,6 @@ async fn main() -> Result<(), AppError> {
     info!("Blog server shut down");
 
     Ok(())
-}
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello from Actix-web with Tokio!")
 }
 
 
