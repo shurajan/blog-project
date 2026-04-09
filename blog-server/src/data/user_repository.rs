@@ -1,4 +1,5 @@
 use sqlx::PgPool;
+use crate::domain::error::AppError;
 use crate::domain::user::{NewUser, User};
 
 #[derive(Clone)]
@@ -13,7 +14,7 @@ impl UserRepository {
 }
 impl UserRepository {
 
-    pub async fn create(&self, new: NewUser) -> sqlx::Result<User> {
+    pub async fn create(&self, new: NewUser) -> Result<User, AppError> {
         sqlx::query_as!(
             User,
             r#"
@@ -26,17 +27,17 @@ impl UserRepository {
             new.password_hash,
         )
             .fetch_one(&self.pool)
-            .await
+            .await.map_err(AppError::from)
     }
 
-    pub async fn find_by_email(&self, email: &str) -> sqlx::Result<Option<User>> {
+    pub async fn find_by_username(&self, username: &str) -> Result<User, AppError> {
         sqlx::query_as!(
             User,
             r#"SELECT id, username, email, password_hash, created_at
-               FROM users WHERE email = $1"#,
-            email,
+               FROM users WHERE username = $1"#,
+            username,
         )
             .fetch_optional(&self.pool)
-            .await
+            .await?.ok_or(AppError::UserNotFound {username: username.to_string()})
     }
 }

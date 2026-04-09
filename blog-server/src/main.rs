@@ -1,8 +1,10 @@
-use actix_web::{App, HttpServer};
-use sqlx::PgPool;
+use actix_web::{web, App, HttpServer};
 use tracing::{error, info, warn};
+use crate::application::auth_service::AuthService;
+use crate::data::user_repository::UserRepository;
 use crate::domain::error::AppError;
-use crate::handlers::hello;
+use crate::domain::user::NewUser;
+use crate::handlers::{hello, register};
 use crate::infrasturcture::config::AppConfig;
 use crate::infrasturcture::database::{create_pool, run_migrations};
 use crate::infrasturcture::logging::init_logging;
@@ -11,6 +13,8 @@ mod domain;
 mod handlers;
 mod infrasturcture;
 mod data;
+mod application;
+mod dto;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
@@ -20,14 +24,18 @@ async fn main() -> Result<(), AppError> {
 
     let pool = create_pool(&config.database_url).await?;
     run_migrations(&pool).await?;
+    
+    let user_repository = UserRepository::new(pool.clone());
+    let auth_service = AuthService::new(user_repository.clone());
 
-    // TODO: убрать перед перед сдачей
-    if let Err(e) = seed_test_users(&pool).await {
+    // TODO: убрать перед сдачей
+    if let Err(e) = seed_test_users(&user_repository).await {
         warn!("failed to seed test users: {:?}", e);
     }
 
     let rest = tokio::spawn({
-        async move { run_server().await }
+        let auth_service = auth_service.clone();
+        async move { run_server(auth_service).await }
     });
 
     tokio::select! {
@@ -45,7 +53,7 @@ async fn main() -> Result<(), AppError> {
 }
 
 /// Вставляет несколько тестовых пользователей.
-async fn seed_test_users(pool: &PgPool) -> Result<(), sqlx::Error> {
+async fn seed_test_users(repo: &UserRepository) -> Result<(), AppError> {
     // Заглушка вместо реального хеша — потом замените на bcrypt/argon2.
     let fake_hash = "$argon2id$v=19$m=19456,t=2,p=1$placeholder$placeholder";
 
@@ -56,35 +64,33 @@ async fn seed_test_users(pool: &PgPool) -> Result<(), sqlx::Error> {
     ];
 
     for (username, email) in users {
-        let result = sqlx::query(
-            r#"
-            INSERT INTO users (username, email, password_hash)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (email) DO NOTHING
-            "#,
-        )
-            .bind(username)
-            .bind(email)
-            .bind(fake_hash)
-            .execute(pool)
-            .await?;
+        let new_user = NewUser {
+            username: username.to_string(),
+            email: email.to_string(),
+            password_hash: fake_hash.to_string(),
+        };
 
-        if result.rows_affected() > 0 {
-            info!("seeded user {} <{}>", username, email);
-        } else {
-            info!("user {} <{}> already exists, skipped", username, email);
+        match repo.create(new_user).await {
+            Ok(user) => info!("created user: {:?}", user),
+            Err(e)   => warn!("failed to seed {}: {:?}", email, e),
         }
     }
 
     Ok(())
 }
 
-async fn run_server() -> Result<(), AppError> {
-    HttpServer::new(|| {
+async fn run_server(auth_service: AuthService) -> Result<(), AppError> {
+
+    let auth_data = web::Data::new(auth_service);
+
+    HttpServer::new(move || {
         App::new()
+            .app_data(auth_data.clone())
             .service(hello)
+            .service(register)
     })
-        .bind(("127.0.0.1", 8080)).unwrap_or_else(|err| panic!("IO Error: {}", err))
+        .bind(("127.0.0.1", 8080))
+        .unwrap_or_else(|err| panic!("IO Error: {}", err))
         .run()
         .await?;
 
