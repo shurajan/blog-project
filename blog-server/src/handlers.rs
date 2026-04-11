@@ -1,4 +1,5 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse, HttpResponseBuilder, Responder};
+use actix_web::http::StatusCode;
 use tracing::info;
 use crate::application::auth_service::AuthService;
 use crate::domain::error::AppError;
@@ -20,9 +21,6 @@ async fn register(
     let user = service.register(username, email, password).await?;
 
     info!(user_id = %user.id, email = %user.email, "user registered");
-
-    Ok(HttpResponse::Created().json(serde_json::json!({
-        "user_id": user.id,
-        "email": user.email
-    })))
+    
+    Ok(HttpResponseBuilder::new(StatusCode::CREATED).json(user))
 }

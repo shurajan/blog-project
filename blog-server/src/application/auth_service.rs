@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use tracing::{info, instrument};
+use tracing::{info};
 
 use crate::data::user_repository::UserRepository;
 use crate::domain::{user::User};
 use crate::domain::error::AppError;
 use crate::domain::user::NewUser;
+use crate::infrasturcture::security::hash_password;
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -25,7 +26,7 @@ impl AuthService
     }
 
     pub async fn register(&self, username: String, email: String, password: String) -> Result<User, AppError> {
-        let hash = "$argon2id$v=19$m=19456,t=2,p=1$placeholder$placeholder";//hash_password(&password).map_err(|err| AppError::Internal(err.to_string()))?;
+        let hash = hash_password(&password).map_err(|err| AppError::Internal(err.to_string()))?;
         let new_user = NewUser {
             username: username.to_string(),
             email: email.to_string(),
