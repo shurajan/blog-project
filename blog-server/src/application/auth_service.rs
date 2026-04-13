@@ -3,7 +3,6 @@ use tracing::info;
 
 use crate::data::user_repository::UserRepository;
 use crate::domain::error::AppError;
-use crate::domain::error::AppError::UserNotFound;
 use crate::domain::user::User;
 use crate::domain::user::{NewUser, UserAndToken};
 use crate::infrastructure::jwt::JwtService;
@@ -20,14 +19,11 @@ pub struct AuthService {
 
 impl AuthService {
     pub fn new(user_repo: UserRepository, jwt_service: Arc<JwtService>) -> Self {
-        Self {
-            user_repo,
-            jwt_service,
-        }
+        Self { user_repo, jwt_service }
     }
 
     pub async fn get_user(&self, username: &str) -> Result<User, AppError> {
-        self.user_repo.find_by_username(username).await.map_err(|e| UserNotFound {username: username.into()})
+        self.user_repo.find_by_username(username).await
     }
 
     pub async fn register(
@@ -41,29 +37,47 @@ impl AuthService {
             .map_err(|e| AppError::Internal(e.to_string()))?
             .map_err(|e| AppError::Internal(e.to_string()))?;
 
-        let new_user = NewUser {
-            username,
-            email,
-            password_hash,
-        };
+        let new_user = NewUser { username, email, password_hash };
         let user = self.user_repo.create(new_user).await?;
 
         let token = self
             .jwt_service
             .generate_token(user.id.clone(), user.username.clone())?;
 
-        let result = UserAndToken { user, token };
-        info!("created user: {:?}", result);
-        Ok(result)
+        info!(user_id = %user.id, "user registered");
+        Ok(UserAndToken { user, token })
+    }
+
+    pub async fn login(&self, username: &str, password: &str) -> Result<UserAndToken, AppError> {
+        let user = self
+            .user_repo
+            .find_by_username(username)
+            .await?;
+
+        let password = password.to_owned();
+        let hash = user.password_hash.clone();
+        let is_matched = tokio::task::spawn_blocking(move || verify_password(&password, &hash))
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+
+        if !is_matched {
+            return Err(AppError::InvalidCredentials);
+        }
+
+        let token = self
+            .jwt_service
+            .generate_token(user.id.clone(), user.username.clone())?;
+
+        info!(user_id = %user.id, "user logged in");
+        Ok(UserAndToken { user, token })
     }
 }
 
 fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    let hash = argon2
-        .hash_password(password.as_bytes(), &salt)?
-        .to_string();
+    let hash = argon2.hash_password(password.as_bytes(), &salt)?.to_string();
     Ok(hash)
 }
 

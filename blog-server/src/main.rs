@@ -6,7 +6,7 @@ use crate::infrastructure::config::AppConfig;
 use crate::infrastructure::database::{create_pool, run_migrations};
 use crate::infrastructure::jwt::JwtService;
 use crate::infrastructure::logging::init_logging;
-use crate::presentation::auth_http_handlers::register;
+use crate::presentation::auth_http_handlers::{login, register};
 use actix_web::{App, HttpServer, web};
 use std::sync::Arc;
 use tracing::{error, info, warn};
@@ -31,10 +31,6 @@ async fn main() -> Result<(), AppError> {
     let user_repository = UserRepository::new(pool.clone());
     let auth_service = Arc::new(AuthService::new(user_repository.clone(), jwt_service));
 
-    // TODO: убрать перед сдачей
-    if let Err(e) = seed_test_users(&user_repository).await {
-        warn!("failed to seed test users: {:?}", e);
-    }
 
     let rest = tokio::spawn({
         let auth_service = auth_service.clone();
@@ -55,37 +51,14 @@ async fn main() -> Result<(), AppError> {
     Ok(())
 }
 
-/// Вставляет несколько тестовых пользователей.
-async fn seed_test_users(repo: &UserRepository) -> Result<(), AppError> {
-    // Заглушка вместо реального хеша — потом замените на bcrypt/argon2.
-    let fake_hash = "$argon2id$v=19$m=19456,t=2,p=1$placeholder$placeholder";
 
-    let users = [
-        ("alice", "alice@example.com"),
-        ("bob", "bob@example.com"),
-        ("carol", "carol@example.com"),
-    ];
-
-    for (username, email) in users {
-        let new_user = NewUser {
-            username: username.to_string(),
-            email: email.to_string(),
-            password_hash: fake_hash.to_string(),
-        };
-
-        match repo.create(new_user).await {
-            Ok(user) => info!("created user: {:?}", user),
-            Err(e) => warn!("failed to seed {}: {:?}", email, e),
-        }
-    }
-
-    Ok(())
-}
 
 async fn run_server(auth_service: Arc<AuthService>) -> Result<(), AppError> {
     let auth_data = web::Data::new(auth_service);
 
-    HttpServer::new(move || App::new().app_data(auth_data.clone()).service(register))
+    HttpServer::new(move || App::new().app_data(auth_data.clone())
+        .service(register)
+        .service(login))
         .bind(("127.0.0.1", 8080))
         .unwrap_or_else(|err| panic!("IO Error: {}", err))
         .run()

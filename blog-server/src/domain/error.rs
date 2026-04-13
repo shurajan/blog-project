@@ -28,6 +28,9 @@ pub enum AppError {
 
     #[error("user with the same username or/and email already registered")]
     UserAlreadyExists,
+
+    #[error("invalid username or password")]
+    InvalidCredentials
 }
 
 use actix_web::{HttpResponse, ResponseError, http::StatusCode};
@@ -37,6 +40,8 @@ impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match self {
             AppError::UserAlreadyExists => StatusCode::CONFLICT,
+            AppError::UserNotFound { .. } => StatusCode::UNAUTHORIZED,
+            AppError::InvalidCredentials => StatusCode::UNAUTHORIZED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

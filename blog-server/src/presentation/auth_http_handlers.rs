@@ -13,7 +13,13 @@ pub struct RegisterRequest {
     pub password: String,
 }
 
-#[post("/auth/register")]
+#[derive(Debug, Deserialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
+#[post("/api/auth/register")]
 async fn register(
     service: web::Data<Arc<AuthService>>,
     payload: web::Json<RegisterRequest>,
@@ -25,7 +31,19 @@ async fn register(
     } = payload.into_inner();
     let user_and_token = service.register(username, email, password).await?;
 
-    info!(user_id = %user_and_token.user.id, username = %user_and_token.user.username, "user registered");
+    info!(user_id = %user_and_token.user.id,  "user registered");
 
     Ok(HttpResponseBuilder::new(StatusCode::CREATED).json(user_and_token))
+}
+
+#[post("/api/auth/login")]
+async fn login(
+    service: web::Data<Arc<AuthService>>,
+    payload: web::Json<LoginRequest>,
+) -> Result<impl Responder, AppError> {
+    let LoginRequest { username, password } = payload.into_inner();
+    let user_and_token = service.login(&username, &password).await?;
+
+    info!(user_id = %user_and_token.user.id, "user logged in");
+    Ok(HttpResponse::Ok().json(user_and_token))
 }
