@@ -14,11 +14,17 @@ pub enum AppError {
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 
+    #[error("jwt error: {0}")]
+    Jwt(#[from] jsonwebtoken::errors::Error),
+
     #[error("internal error: {0}")]
     Internal(String),
 
-    #[error("User \"{username}\" not found")]
+    #[error("user \"{username}\" not found")]
     UserNotFound { username: String },
+
+    #[error("invalid datetime on server")]
+    InvalidDatetime,
 }
 
 
@@ -28,7 +34,6 @@ use serde_json::json;
 impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match self {
-            // подгоните под свои варианты
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

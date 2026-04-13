@@ -1,20 +1,21 @@
+use std::sync::Arc;
 use actix_web::{web, App, HttpServer};
 use tracing::{error, info, warn};
 use crate::application::auth_service::AuthService;
 use crate::data::user_repository::UserRepository;
 use crate::domain::error::AppError;
 use crate::domain::user::NewUser;
-use crate::handlers::{hello, register};
+use crate::presentation::auth_http_handlers::{hello, register};
 use crate::infrasturcture::config::AppConfig;
 use crate::infrasturcture::database::{create_pool, run_migrations};
+use crate::infrasturcture::jwt::JwtService;
 use crate::infrasturcture::logging::init_logging;
 
 mod domain;
-mod handlers;
 mod infrasturcture;
 mod data;
 mod application;
-mod dto;
+mod presentation;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
@@ -24,9 +25,11 @@ async fn main() -> Result<(), AppError> {
 
     let pool = create_pool(&config.database_url).await?;
     run_migrations(&pool).await?;
+
+    let jwt_service = Arc::new(JwtService::new(&config.jwt_secret));
     
     let user_repository = UserRepository::new(pool.clone());
-    let auth_service = AuthService::new(user_repository.clone());
+    let auth_service = AuthService::new(user_repository.clone(), jwt_service);
 
     // TODO: убрать перед сдачей
     if let Err(e) = seed_test_users(&user_repository).await {
