@@ -14,6 +14,8 @@ impl UserRepository {
 }
 impl UserRepository {
     pub async fn create(&self, new: NewUser) -> Result<User, AppError> {
+        const DUPLICATE_CODE: &str = "23505";
+
         sqlx::query_as!(
             User,
             r#"
@@ -27,7 +29,10 @@ impl UserRepository {
         )
         .fetch_one(&self.pool)
         .await
-        .map_err(AppError::from)
+            .map_err(|err| match err.as_database_error().and_then(|e| e.code()) {
+                Some(code) if code == DUPLICATE_CODE => AppError::UserAlreadyExists,
+                _ => AppError::from(err),
+            })
     }
 
     pub async fn find_by_username(&self, username: &str) -> Result<User, AppError> {

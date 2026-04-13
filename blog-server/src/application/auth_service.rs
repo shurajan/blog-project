@@ -27,7 +27,7 @@ impl AuthService {
     }
 
     pub async fn get_user(&self, username: &str) -> Result<User, AppError> {
-        self.user_repo.find_by_username(username).await
+        self.user_repo.find_by_username(username).await.map_err(|e| UserNotFound {username: username.into()})
     }
 
     pub async fn register(
@@ -50,7 +50,7 @@ impl AuthService {
 
         let token = self
             .jwt_service
-            .generate_token(user.id.clone(), user.email.clone())?;
+            .generate_token(user.id.clone(), user.username.clone())?;
 
         let result = UserAndToken { user, token };
         info!("created user: {:?}", result);

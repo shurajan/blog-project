@@ -20,11 +20,14 @@ pub enum AppError {
     #[error("internal error: {0}")]
     Internal(String),
 
+    #[error("invalid datetime on server")]
+    InvalidDatetime,
+
     #[error("user \"{username}\" not found")]
     UserNotFound { username: String },
 
-    #[error("invalid datetime on server")]
-    InvalidDatetime,
+    #[error("user with the same username or/and email already registered")]
+    UserAlreadyExists,
 }
 
 use actix_web::{HttpResponse, ResponseError, http::StatusCode};
@@ -33,6 +36,7 @@ use serde_json::json;
 impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match self {
+            AppError::UserAlreadyExists => StatusCode::CONFLICT,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
