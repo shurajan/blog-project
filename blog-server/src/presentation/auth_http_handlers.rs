@@ -12,11 +12,6 @@ pub struct RegisterRequest {
     pub password: String,
 }
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello from Actix-web with Tokio!")
-}
-
 #[post("/auth/register")]
 async fn register(
     service: web::Data<AuthService>,

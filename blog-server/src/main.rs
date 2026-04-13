@@ -5,7 +5,7 @@ use crate::application::auth_service::AuthService;
 use crate::data::user_repository::UserRepository;
 use crate::domain::error::AppError;
 use crate::domain::user::NewUser;
-use crate::presentation::auth_http_handlers::{hello, register};
+use crate::presentation::auth_http_handlers::{ register};
 use crate::infrasturcture::config::AppConfig;
 use crate::infrasturcture::database::{create_pool, run_migrations};
 use crate::infrasturcture::jwt::JwtService;
@@ -89,7 +89,6 @@ async fn run_server(auth_service: AuthService) -> Result<(), AppError> {
     HttpServer::new(move || {
         App::new()
             .app_data(auth_data.clone())
-            .service(hello)
             .service(register)
     })
         .bind(("127.0.0.1", 8080))
