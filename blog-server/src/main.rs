@@ -1,20 +1,20 @@
-use std::sync::Arc;
-use actix_web::{web, App, HttpServer};
-use tracing::{error, info, warn};
 use crate::application::auth_service::AuthService;
 use crate::data::user_repository::UserRepository;
 use crate::domain::error::AppError;
 use crate::domain::user::NewUser;
-use crate::presentation::auth_http_handlers::{ register};
-use crate::infrasturcture::config::AppConfig;
-use crate::infrasturcture::database::{create_pool, run_migrations};
-use crate::infrasturcture::jwt::JwtService;
-use crate::infrasturcture::logging::init_logging;
+use crate::infrastructure::config::AppConfig;
+use crate::infrastructure::database::{create_pool, run_migrations};
+use crate::infrastructure::jwt::JwtService;
+use crate::infrastructure::logging::init_logging;
+use crate::presentation::auth_http_handlers::register;
+use actix_web::{App, HttpServer, web};
+use std::sync::Arc;
+use tracing::{error, info, warn};
 
-mod domain;
-mod infrasturcture;
-mod data;
 mod application;
+mod data;
+mod domain;
+mod infrastructure;
 mod presentation;
 
 #[tokio::main]
@@ -27,9 +27,9 @@ async fn main() -> Result<(), AppError> {
     run_migrations(&pool).await?;
 
     let jwt_service = Arc::new(JwtService::new(&config.jwt_secret));
-    
+
     let user_repository = UserRepository::new(pool.clone());
-    let auth_service = AuthService::new(user_repository.clone(), jwt_service);
+    let auth_service = Arc::new(AuthService::new(user_repository.clone(), jwt_service));
 
     // TODO: убрать перед сдачей
     if let Err(e) = seed_test_users(&user_repository).await {
@@ -62,7 +62,7 @@ async fn seed_test_users(repo: &UserRepository) -> Result<(), AppError> {
 
     let users = [
         ("alice", "alice@example.com"),
-        ("bob",   "bob@example.com"),
+        ("bob", "bob@example.com"),
         ("carol", "carol@example.com"),
     ];
 
@@ -75,22 +75,17 @@ async fn seed_test_users(repo: &UserRepository) -> Result<(), AppError> {
 
         match repo.create(new_user).await {
             Ok(user) => info!("created user: {:?}", user),
-            Err(e)   => warn!("failed to seed {}: {:?}", email, e),
+            Err(e) => warn!("failed to seed {}: {:?}", email, e),
         }
     }
 
     Ok(())
 }
 
-async fn run_server(auth_service: AuthService) -> Result<(), AppError> {
-
+async fn run_server(auth_service: Arc<AuthService>) -> Result<(), AppError> {
     let auth_data = web::Data::new(auth_service);
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(auth_data.clone())
-            .service(register)
-    })
+    HttpServer::new(move || App::new().app_data(auth_data.clone()).service(register))
         .bind(("127.0.0.1", 8080))
         .unwrap_or_else(|err| panic!("IO Error: {}", err))
         .run()

@@ -35,9 +35,7 @@ impl JwtService {
             .checked_add_signed(TOKEN_LIFETIME)
             .ok_or(AppError::InvalidDatetime)?;
 
-        trace!(
-            "Generating token for {username} ({user_id}), expires at {expiration_time}"
-        );
+        trace!("Generating token for {username} ({user_id}), expires at {expiration_time}");
 
         let claims = Claims {
             user_id,

@@ -1,6 +1,6 @@
+use crate::domain::error::AppError;
 use serde::Deserialize;
 use tracing::info;
-use crate::domain::error::AppError;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
@@ -25,4 +25,3 @@ impl AppConfig {
         })
     }
 }
-

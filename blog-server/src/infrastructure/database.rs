@@ -1,6 +1,6 @@
-use sqlx::{postgres::PgPoolOptions, PgPool};
-use tracing::info;
 use crate::domain::error::AppError;
+use sqlx::{PgPool, postgres::PgPoolOptions};
+use tracing::info;
 
 pub async fn create_pool(database_url: &str) -> Result<PgPool, AppError> {
     let pool = PgPoolOptions::new()
@@ -19,4 +19,3 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), AppError> {
     info!("migrations completed");
     Ok(())
 }
-

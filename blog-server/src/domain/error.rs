@@ -10,7 +10,7 @@ pub enum AppError {
 
     #[error("config error: {0}")]
     Config(String),
-    
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 
@@ -27,8 +27,7 @@ pub enum AppError {
     InvalidDatetime,
 }
 
-
-use actix_web::{http::StatusCode, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, http::StatusCode};
 use serde_json::json;
 
 impl ResponseError for AppError {

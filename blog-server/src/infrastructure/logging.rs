@@ -1,5 +1,5 @@
-use tracing_subscriber::{fmt, EnvFilter};
 use crate::domain::error::AppError;
+use tracing_subscriber::{EnvFilter, fmt};
 
 pub fn init_logging() -> Result<(), AppError> {
     let filter = EnvFilter::try_from_default_env()
@@ -17,4 +17,3 @@ pub fn init_logging() -> Result<(), AppError> {
     let _ = tracing::subscriber::set_global_default(subscriber);
     Ok(())
 }
-
