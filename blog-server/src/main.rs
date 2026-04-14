@@ -8,9 +8,7 @@ use crate::infrastructure::database::{create_pool, run_migrations};
 use crate::infrastructure::jwt::JwtService;
 use crate::infrastructure::logging::init_logging;
 use crate::presentation::auth_http_handlers::{login, register};
-//use crate::presentation::blog_http_handlers::{
-//    create_post, delete_post, get_post, list_posts, update_post,
-//};
+
 use crate::presentation::middleware::JwtAuthMiddleware;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
@@ -61,11 +59,11 @@ async fn main() -> Result<(), AppError> {
     });
 
     // gRPC
-    // tasks.spawn({
-    //     let blog = blog_service.clone();
-    //     let shutdown = shutdown.clone();
-    //     async move { ("grpc", run_grpc(blog, shutdown).await) }
-    // });
+    tasks.spawn({
+        let post = post_service.clone();
+        let shutdown = shutdown.clone();
+        async move { ("grpc", run_grpc(post, shutdown).await) }
+    });
 
     tokio::select! {
         _ = wait_for_signal() => {
@@ -179,7 +177,7 @@ async fn run_rest(
 }
 
 async fn run_grpc(
-    //_blog_service: Arc<BlogService>,
+    post_service: Arc<PostService>,
     shutdown: CancellationToken,
 ) -> Result<(), AppError> {
     // TODO: ваша инициализация tonic-сервера
