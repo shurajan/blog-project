@@ -30,7 +30,19 @@ pub enum AppError {
     UserAlreadyExists,
 
     #[error("invalid username or password")]
-    InvalidCredentials
+    InvalidCredentials,
+
+    #[error("post not found: id={id}")]
+    PostNotFound { id: i64 },
+
+    #[error("access forbidden")]
+    Forbidden,
+
+    #[error("unauthorized")]
+    Unauthorized,
+
+    #[error("validation error: {0}")]
+    Validation(String),
 }
 
 use actix_web::{HttpResponse, ResponseError, http::StatusCode};
@@ -42,6 +54,11 @@ impl ResponseError for AppError {
             AppError::UserAlreadyExists => StatusCode::CONFLICT,
             AppError::UserNotFound { .. } => StatusCode::UNAUTHORIZED,
             AppError::InvalidCredentials => StatusCode::UNAUTHORIZED,
+            AppError::Unauthorized => StatusCode::UNAUTHORIZED,
+            AppError::Jwt(_) => StatusCode::UNAUTHORIZED,
+            AppError::Forbidden => StatusCode::FORBIDDEN,
+            AppError::PostNotFound { .. } => StatusCode::NOT_FOUND,
+            AppError::Validation(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

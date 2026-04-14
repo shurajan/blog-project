@@ -19,7 +19,7 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[post("/api/auth/register")]
+#[post("/register")]
 async fn register(
     service: web::Data<Arc<AuthService>>,
     payload: web::Json<RegisterRequest>,
@@ -36,7 +36,7 @@ async fn register(
     Ok(HttpResponseBuilder::new(StatusCode::CREATED).json(user_and_token))
 }
 
-#[post("/api/auth/login")]
+#[post("/login")]
 async fn login(
     service: web::Data<Arc<AuthService>>,
     payload: web::Json<LoginRequest>,

@@ -118,7 +118,7 @@ Content-Type: application/json
 POST {{host}}/api/auth/register
 Content-Type: application/json
 
-{"username": "bob"
+{"username": "bob"}
 
 > {%
     client.test("Status is 400", () => {
