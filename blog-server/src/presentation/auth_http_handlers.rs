@@ -4,7 +4,7 @@ use crate::domain::error::AppError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, HttpResponseBuilder, Responder, get, post, web};
 use serde::Deserialize;
-use tracing::info;
+use tracing::{debug};
 
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
@@ -31,7 +31,7 @@ async fn register(
     } = payload.into_inner();
     let user_and_token = service.register(username, email, password).await?;
 
-    info!(user_id = %user_and_token.user.id,  "user registered");
+    debug!(user_id = %user_and_token.user.id,  "user registered");
 
     Ok(HttpResponseBuilder::new(StatusCode::CREATED).json(user_and_token))
 }
@@ -44,6 +44,6 @@ async fn login(
     let LoginRequest { username, password } = payload.into_inner();
     let user_and_token = service.login(&username, &password).await?;
 
-    info!(user_id = %user_and_token.user.id, "user logged in");
+    debug!(user_id = %user_and_token.user.id, "user logged in");
     Ok(HttpResponse::Ok().json(user_and_token))
 }

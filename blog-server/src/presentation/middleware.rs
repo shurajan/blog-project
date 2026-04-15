@@ -7,6 +7,8 @@ use actix_web::dev::{Service, ServiceRequest, ServiceResponse, Transform, forwar
 use actix_web::{Error, FromRequest, HttpMessage, HttpRequest, ResponseError, dev::Payload};
 use futures_util::future::LocalBoxFuture;
 
+use tracing::{debug, warn};
+
 use crate::domain::error::AppError;
 use crate::infrastructure::jwt::{Claims, JwtService};
 
@@ -26,7 +28,7 @@ impl From<Claims> for AuthUser {
 }
 
 impl FromRequest for AuthUser {
-    type Error = actix_web::Error;
+    type Error = Error;
     type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
@@ -89,9 +91,13 @@ where
         let jwt_service = self.jwt_service.clone();
 
         Box::pin(async move {
+            let path = req.path().to_owned();
+            let method = req.method().clone();
+
             let token = match extract_bearer_token(&req) {
                 Some(t) => t,
                 None => {
+                    warn!(method = %method, path = %path, "request rejected: missing or malformed Authorization header");
                     let (http_req, _) = req.into_parts();
                     let resp = AppError::Unauthorized.error_response();
                     return Ok(ServiceResponse::new(http_req, resp).map_into_right_body());
@@ -100,11 +106,13 @@ where
 
             match jwt_service.verify_token(&token) {
                 Ok(claims) => {
+                    debug!(user_id = claims.user_id, username = %claims.username, method = %method, path = %path, "token verified");
                     req.extensions_mut().insert(AuthUser::from(claims));
                     let res = service.call(req).await?;
                     Ok(res.map_into_left_body())
                 }
                 Err(err) => {
+                    warn!(method = %method, path = %path, error = %err, "request rejected: token verification failed");
                     let (http_req, _) = req.into_parts();
                     let resp = err.error_response();
                     Ok(ServiceResponse::new(http_req, resp).map_into_right_body())

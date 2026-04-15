@@ -1,4 +1,4 @@
-use tracing::info;
+use tracing::{debug, instrument};
 
 use crate::data::post_repository::PostRepository;
 use crate::domain::error::AppError;
@@ -17,6 +17,11 @@ impl PostService {
         Self { post_repo }
     }
 
+    #[instrument(
+        skip(self, content),
+        fields(author_id = %author_id, post_id = tracing::field::Empty),
+        err,
+    )]
     pub async fn create(
         &self,
         author_id: i64,
@@ -33,14 +38,21 @@ impl PostService {
         let new_post = NewPost { title, content, author_id };
         let post = self.post_repo.create(new_post).await?;
 
-        info!(post_id = %post.id, author_id = %post.author_id, "post created");
+        tracing::Span::current().record("post_id", post.id);
+        debug!(post_id = %post.id, author_id = %post.author_id, "post created");
         Ok(post)
     }
 
+    #[instrument(skip(self), fields(post_id = %id), err)]
     pub async fn get(&self, id: i64) -> Result<Post, AppError> {
         self.post_repo.find_by_id(id).await
     }
 
+    #[instrument(
+        skip(self, content),
+        fields(post_id = %id, user_id = %user_id),
+        err,
+    )]
     pub async fn update(
         &self,
         id: i64,
@@ -70,10 +82,11 @@ impl PostService {
         let patch = PostUpdate { title, content };
         let post = self.post_repo.update(id, patch).await?;
 
-        info!(post_id = %post.id, user_id = %user_id, "post updated");
+        debug!(post_id = %post.id, user_id = %user_id, "post updated");
         Ok(post)
     }
 
+    #[instrument(skip(self), fields(post_id = %id, user_id = %user_id), err)]
     pub async fn delete(&self, id: i64, user_id: i64) -> Result<(), AppError> {
         let existing = self.post_repo.find_by_id(id).await?;
         if existing.author_id != user_id {
@@ -82,10 +95,11 @@ impl PostService {
 
         self.post_repo.delete(id).await?;
 
-        info!(post_id = %id, user_id = %user_id, "post deleted");
+        debug!(post_id = %id, user_id = %user_id, "post deleted");
         Ok(())
     }
 
+    #[instrument(skip(self), fields(limit = ?limit, offset = ?offset), err)]
     pub async fn list(
         &self,
         limit: Option<i64>,

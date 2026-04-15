@@ -6,7 +6,7 @@ use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, HttpResponseBuilder, Responder, delete, get, post, put, web};
 use serde::Deserialize;
 use serde_json::json;
-use tracing::info;
+use tracing::{debug};
 
 #[derive(Debug, Deserialize)]
 pub struct CreatePostRequest {
@@ -35,7 +35,7 @@ async fn create_post(
     let CreatePostRequest { title, content } = payload.into_inner();
     let post = service.create(user.id, title, content).await?;
 
-    info!(post_id = %post.id, author_id = %post.author_id, "post created");
+    debug!(post_id = %post.id, author_id = %post.author_id, "post created");
 
     Ok(HttpResponseBuilder::new(StatusCode::CREATED).json(post))
 }
@@ -62,7 +62,7 @@ async fn update_post(
     let UpdatePostRequest { title, content } = payload.into_inner();
     let post = service.update(id, user.id, title, content).await?;
 
-    info!(post_id = %post.id, user_id = %user.id, "post updated");
+    debug!(post_id = %post.id, user_id = %user.id, "post updated");
 
     Ok(HttpResponse::Ok().json(post))
 }
@@ -76,7 +76,7 @@ async fn delete_post(
     let id = path.into_inner();
     service.delete(id, user.id).await?;
 
-    info!(post_id = %id, user_id = %user.id, "post deleted");
+    debug!(post_id = %id, user_id = %user.id, "post deleted");
 
     Ok(HttpResponse::NoContent().finish())
 }

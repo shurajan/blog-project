@@ -1,5 +1,7 @@
 ### =====================================================================
-### Blog Server — Auth + Posts API (RustRover / IntelliJ HTTP Client)
+### Blog Server — Auth + Posts API Integration tests
+### (RustRover / IntelliJ HTTP Client) ONLY
+### RUN ON CLEAN DATABASE
 ### =====================================================================
 
 @host = http://127.0.0.1:8080

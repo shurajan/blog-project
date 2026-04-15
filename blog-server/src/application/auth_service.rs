@@ -1,9 +1,8 @@
 use std::sync::Arc;
-use tracing::info;
+use tracing::{debug, instrument};
 
 use crate::data::user_repository::UserRepository;
 use crate::domain::error::AppError;
-use crate::domain::user::User;
 use crate::domain::user::{NewUser, UserAndToken};
 use crate::infrastructure::jwt::JwtService;
 use argon2::{
@@ -22,10 +21,11 @@ impl AuthService {
         Self { user_repo, jwt_service }
     }
 
-    pub async fn get_user(&self, username: &str) -> Result<User, AppError> {
-        self.user_repo.find_by_username(username).await
-    }
-
+    #[instrument(
+        skip(self, password),
+        fields(username = %username, user_id = tracing::field::Empty),
+        err,
+    )]
     pub async fn register(
         &self,
         username: String,
@@ -44,10 +44,15 @@ impl AuthService {
             .jwt_service
             .generate_token(user.id.clone(), user.username.clone())?;
 
-        info!(user_id = %user.id, "user registered");
+        debug!(user_id = %user.id, "user registered");
         Ok(UserAndToken { user, token })
     }
 
+    #[instrument(
+        skip(self, password),
+        fields(username = %username, user_id = tracing::field::Empty),
+        err,
+    )]
     pub async fn login(&self, username: &str, password: &str) -> Result<UserAndToken, AppError> {
         let user = self
             .user_repo
@@ -67,9 +72,9 @@ impl AuthService {
 
         let token = self
             .jwt_service
-            .generate_token(user.id.clone(), user.username.clone())?;
+            .generate_token(user.id, user.username.clone())?;
 
-        info!(user_id = %user.id, "user logged in");
+        debug!(user_id = %user.id, "user logged in");
         Ok(UserAndToken { user, token })
     }
 }
