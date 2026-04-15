@@ -42,7 +42,7 @@ async fn login(
     payload: web::Json<LoginRequest>,
 ) -> Result<impl Responder, AppError> {
     let LoginRequest { username, password } = payload.into_inner();
-    let user_and_token = service.login(&username, &password).await?;
+    let user_and_token = service.login(username, password).await?;
 
     debug!(user_id = %user_and_token.user.id, "user logged in");
     Ok(HttpResponse::Ok().json(user_and_token))

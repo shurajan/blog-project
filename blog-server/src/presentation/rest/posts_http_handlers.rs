@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use crate::application::post_service::PostService;
 use crate::domain::error::AppError;
-use crate::presentation::middleware::AuthUser;
+use crate::presentation::rest::middleware::AuthUser;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, HttpResponseBuilder, Responder, delete, get, post, put, web};
 use serde::Deserialize;

@@ -53,10 +53,10 @@ impl AuthService {
         fields(username = %username, user_id = tracing::field::Empty),
         err,
     )]
-    pub async fn login(&self, username: &str, password: &str) -> Result<UserAndToken, AppError> {
+    pub async fn login(&self, username: String, password: String) -> Result<UserAndToken, AppError> {
         let user = self
             .user_repo
-            .find_by_username(username)
+            .find_by_username(username.as_str())
             .await?;
 
         let password = password.to_owned();

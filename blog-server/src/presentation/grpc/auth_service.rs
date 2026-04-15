@@ -34,6 +34,11 @@ impl AuthService for AuthApi {
     }
 
     async fn login(&self, request: Request<LoginRequest>) -> Result<Response<AuthResponse>, Status> {
-        todo!()
+        let LoginRequest { username, password } = request.into_inner();
+        
+        let user_and_token = self.service.login(username, password).await?;
+        debug!(user_id = %user_and_token.user.id,  "user logged in");
+        let auth_response = AuthResponse{user: None, token: user_and_token.token};
+        Ok(Response::new(auth_response))
     }
 }

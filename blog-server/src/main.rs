@@ -1,4 +1,14 @@
 use std::net::SocketAddr;
+use std::sync::Arc;
+
+use actix_cors::Cors;
+use actix_web::middleware::Logger;
+use actix_web::{App, HttpServer, web};
+use tokio::task::JoinSet;
+use tokio_util::sync::CancellationToken;
+use tonic::transport::Server;
+use tracing::{error, info, warn};
+
 use crate::application::auth_service::AuthService;
 use crate::application::post_service::PostService;
 use crate::data::post_repository::PostRepository;
@@ -8,22 +18,12 @@ use crate::infrastructure::config::AppConfig;
 use crate::infrastructure::database::{create_pool, run_migrations};
 use crate::infrastructure::jwt::JwtService;
 use crate::infrastructure::logging::init_logging;
-use crate::presentation::auth_http_handlers::{login, register};
-
-use crate::presentation::middleware::JwtAuthMiddleware;
-use actix_cors::Cors;
-use actix_web::middleware::Logger;
-use actix_web::{App, HttpServer, web};
-use std::sync::Arc;
-use tokio::task::JoinSet;
-use tokio_util::sync::CancellationToken;
-use tonic::transport::Server;
-use tracing::{error, info, warn};
+use crate::presentation::grpc::auth_service::AuthApi;
 use crate::presentation::grpc::proto::blog::auth_service_server::AuthServiceServer;
-use crate::presentation::posts_http_handlers::{create_post, delete_post, get_post, list_posts, update_post};
-
-use crate::presentation::grpc::auth_service::{
-    AuthApi,
+use crate::presentation::rest::auth_http_handlers::{login, register};
+use crate::presentation::rest::middleware::JwtAuthMiddleware;
+use crate::presentation::rest::posts_http_handlers::{
+    create_post, delete_post, get_post, list_posts, update_post,
 };
 
 mod application;
