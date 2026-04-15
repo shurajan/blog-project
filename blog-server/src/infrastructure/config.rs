@@ -24,4 +24,14 @@ impl AppConfig {
             jwt_secret,
         })
     }
+
+    pub fn with_database_url(mut self, database_url: String) -> Self {
+        self.database_url = database_url;
+        self
+    }
+
+    pub fn with_jwt_secret(mut self, jwt_secret: String) -> Self {
+        self.jwt_secret = jwt_secret;
+        self
+    }
 }

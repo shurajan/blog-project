@@ -1,9 +1,0 @@
-{
-  "protoFiles": [
-    "../proto/blog.proto"
-  ],
-  "protoImportPaths": [
-    "../proto",
-    "/opt/homebrew/include"
-  ]
-}
