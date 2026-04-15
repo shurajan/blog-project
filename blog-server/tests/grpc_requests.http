@@ -1,0 +1,479 @@
+### =====================================================================
+### Blog Server — Auth + Posts gRPC Integration tests
+### (RustRover / IntelliJ HTTP Client) ONLY
+### RUN ON CLEAN DATABASE
+### =====================================================================
+
+@host = localhost:50051
+
+@username = alice
+@email = alice@example.com
+@password = Secret123
+
+@other_username = mallory
+@other_email = mallory@example.com
+@other_password = Hacker123
+
+
+### =====================================================================
+### AUTH
+### =====================================================================
+
+### 1. Register alice — happy path (expect User + token)
+GRPC {{host}}/blog.v1.AuthService/Register
+
+{
+  "username": "{{username}}",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.test("Response received", () => {
+        client.assert(response.body, "Empty response");
+    });
+    client.test("Token returned", () => {
+        client.assert(response.body.token, "No token in response");
+    });
+    client.test("User returned with id", () => {
+        client.assert(response.body.user && response.body.user.id, "No user.id in response");
+    });
+    client.global.set("auth_token", response.body.token);
+    client.global.set("user_id", response.body.user.id);
+%}
+
+
+### 2. Register — duplicate user (expect ALREADY_EXISTS)
+GRPC {{host}}/blog.v1.AuthService/Register
+
+{
+  "username": "{{username}}",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.test("Status is ALREADY_EXISTS (6)", () => {
+        client.assert(response.status === 6, "Expected ALREADY_EXISTS(6), got " + response.status);
+    });
+%}
+
+
+### 3. Login alice — happy path (expect token)
+GRPC {{host}}/blog.v1.AuthService/Login
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.test("Response received", () => {
+        client.assert(response.body, "Empty response");
+    });
+    client.test("Token returned", () => {
+        client.assert(response.body.token, "No token in response");
+    });
+    client.global.set("auth_token", response.body.token);
+%}
+
+
+### 4. Login — wrong password (expect UNAUTHENTICATED)
+GRPC {{host}}/blog.v1.AuthService/Login
+
+{
+  "username": "{{username}}",
+  "password": "totally_wrong"
+}
+
+> {%
+    client.test("Status is UNAUTHENTICATED (16)", () => {
+        client.assert(response.status === 16, "Expected UNAUTHENTICATED(16), got " + response.status);
+    });
+%}
+
+
+### 5. Login — unknown user (expect UNAUTHENTICATED, not NOT_FOUND — user enumeration check)
+GRPC {{host}}/blog.v1.AuthService/Login
+
+{
+  "username": "ghost_user_does_not_exist",
+  "password": "whatever"
+}
+
+> {%
+    client.test("Status is UNAUTHENTICATED (16, not NOT_FOUND)", () => {
+        client.assert(response.status === 16, "Expected UNAUTHENTICATED(16), got " + response.status);
+    });
+%}
+
+
+### 6. Register mallory (second user, for forbidden tests)
+GRPC {{host}}/blog.v1.AuthService/Register
+
+{
+  "username": "{{other_username}}",
+  "email": "{{other_email}}",
+  "password": "{{other_password}}"
+}
+
+> {%
+    // OK (0) if fresh db, ALREADY_EXISTS (6) if already exists — both acceptable, we just need a token
+    client.test("Status is OK or ALREADY_EXISTS", () => {
+        client.assert(
+            response.status === 0 || response.status === 6,
+            "Expected OK(0) or ALREADY_EXISTS(6), got " + response.status
+        );
+    });
+    if (response.status === 0) {
+        client.global.set("other_token", response.body.token);
+    }
+%}
+
+
+### 7. Login mallory — гарантированно получаем токен второго юзера
+GRPC {{host}}/blog.v1.AuthService/Login
+
+{
+  "username": "{{other_username}}",
+  "password": "{{other_password}}"
+}
+
+> {%
+    client.test("Response received", () => {
+        client.assert(response.body, "Empty response");
+    });
+    client.test("Token returned", () => {
+        client.assert(response.body.token, "No token in response");
+    });
+    client.global.set("other_token", response.body.token);
+%}
+
+
+### =====================================================================
+### POSTS — публичные endpoints (PostService)
+### =====================================================================
+
+### 8. ListPosts — пустой список или уже что-то есть
+GRPC {{host}}/blog.v1.PostService/ListPosts
+
+{}
+
+> {%
+    client.test("Response received", () => {
+        client.assert(response.body !== undefined, "Empty response");
+    });
+    client.test("Response has pagination shape", () => {
+        client.assert(Array.isArray(response.body.posts), "posts is not an array");
+        client.assert(typeof response.body.total === "number", "total missing");
+        client.assert(typeof response.body.limit === "number", "limit missing");
+        client.assert(typeof response.body.offset === "number", "offset missing");
+    });
+%}
+
+
+### 9. ListPosts — с пагинацией
+GRPC {{host}}/blog.v1.PostService/ListPosts
+
+{
+  "limit": 5,
+  "offset": 0
+}
+
+> {%
+    client.test("Response received", () => {
+        client.assert(response.body !== undefined, "Empty response");
+    });
+    client.test("limit respected", () => {
+        client.assert(response.body.limit === 5, "Expected limit=5, got " + response.body.limit);
+        client.assert(response.body.posts.length <= 5, "Too many posts");
+    });
+%}
+
+
+### 10. GetPost — несуществующий id (expect NOT_FOUND)
+GRPC {{host}}/blog.v1.PostService/GetPost
+
+{
+  "id": 999999
+}
+
+> {%
+    client.test("Status is NOT_FOUND (5)", () => {
+        client.assert(response.status === 5, "Expected NOT_FOUND(5), got " + response.status);
+    });
+%}
+
+
+### =====================================================================
+### POSTS — защищённые endpoints (PostEditorService)
+### =====================================================================
+
+### 11. CreatePost — без токена (expect UNAUTHENTICATED)
+GRPC {{host}}/blog.v1.PostEditorService/CreatePost
+
+{
+  "title": "Anonymous attempt",
+  "content": "Should fail"
+}
+
+> {%
+    client.test("Status is UNAUTHENTICATED (16)", () => {
+        client.assert(response.status === 16, "Expected UNAUTHENTICATED(16), got " + response.status);
+    });
+%}
+
+
+### 12. CreatePost — с мусорным токеном (expect UNAUTHENTICATED)
+GRPC {{host}}/blog.v1.PostEditorService/CreatePost
+Authorization: Bearer not.a.real.jwt.token
+
+{
+  "title": "Invalid token attempt",
+  "content": "Should fail"
+}
+
+> {%
+    client.test("Status is UNAUTHENTICATED (16)", () => {
+        client.assert(response.status === 16, "Expected UNAUTHENTICATED(16), got " + response.status);
+    });
+%}
+
+
+### 13. CreatePost — happy path
+GRPC {{host}}/blog.v1.PostEditorService/CreatePost
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "First post",
+  "content": "Hello, world!"
+}
+
+> {%
+    client.test("Response received", () => {
+        client.assert(response.body, "Empty response");
+    });
+    client.test("Post has id, title, content, author_id", () => {
+        client.assert(response.body.id, "No id");
+        client.assert(response.body.title === "First post", "Wrong title: " + response.body.title);
+        client.assert(response.body.content === "Hello, world!", "Wrong content");
+        client.assert(response.body.authorId, "No author_id");
+    });
+    client.global.set("post_id", response.body.id);
+%}
+
+
+### 14. CreatePost — пустой title (expect INVALID_ARGUMENT)
+GRPC {{host}}/blog.v1.PostEditorService/CreatePost
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "   ",
+  "content": "some content"
+}
+
+> {%
+    client.test("Status is INVALID_ARGUMENT (3)", () => {
+        client.assert(response.status === 3, "Expected INVALID_ARGUMENT(3), got " + response.status);
+    });
+%}
+
+
+### 15. CreatePost — пустой content (expect INVALID_ARGUMENT)
+GRPC {{host}}/blog.v1.PostEditorService/CreatePost
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "Title only",
+  "content": "   "
+}
+
+> {%
+    client.test("Status is INVALID_ARGUMENT (3)", () => {
+        client.assert(response.status === 3, "Expected INVALID_ARGUMENT(3), got " + response.status);
+    });
+%}
+
+
+### 16. GetPost — только что созданный пост (expect OK)
+GRPC {{host}}/blog.v1.PostService/GetPost
+
+{
+  "id": {{post_id}}
+}
+
+> {%
+    client.test("Response received", () => {
+        client.assert(response.body, "Empty response");
+    });
+    client.test("Returned correct post", () => {
+        client.assert(
+            String(response.body.id) === String(client.global.get("post_id")),
+            "Post id mismatch"
+        );
+    });
+%}
+
+
+### 17. UpdatePost — happy path
+GRPC {{host}}/blog.v1.PostEditorService/UpdatePost
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": {{post_id}},
+  "title": "First post (updated)"
+}
+
+> {%
+    client.test("Response received", () => {
+        client.assert(response.body, "Empty response");
+    });
+    client.test("Title updated", () => {
+        client.assert(
+            response.body.title === "First post (updated)",
+            "Title not updated: " + response.body.title
+        );
+    });
+    client.test("Content preserved", () => {
+        client.assert(
+            response.body.content === "Hello, world!",
+            "Content was overwritten: " + response.body.content
+        );
+    });
+%}
+
+
+### 18. UpdatePost — пустой патч (expect INVALID_ARGUMENT)
+GRPC {{host}}/blog.v1.PostEditorService/UpdatePost
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": {{post_id}}
+}
+
+> {%
+    client.test("Status is INVALID_ARGUMENT (3)", () => {
+        client.assert(response.status === 3, "Expected INVALID_ARGUMENT(3), got " + response.status);
+    });
+%}
+
+
+### 19. UpdatePost — без токена (expect UNAUTHENTICATED)
+GRPC {{host}}/blog.v1.PostEditorService/UpdatePost
+
+{
+  "id": {{post_id}},
+  "title": "Hijack attempt"
+}
+
+> {%
+    client.test("Status is UNAUTHENTICATED (16)", () => {
+        client.assert(response.status === 16, "Expected UNAUTHENTICATED(16), got " + response.status);
+    });
+%}
+
+
+### 20. UpdatePost — чужой пост (expect PERMISSION_DENIED)
+GRPC {{host}}/blog.v1.PostEditorService/UpdatePost
+Authorization: Bearer {{other_token}}
+
+{
+  "id": {{post_id}},
+  "title": "Hacked by mallory"
+}
+
+> {%
+    client.test("Status is PERMISSION_DENIED (7)", () => {
+        client.assert(response.status === 7, "Expected PERMISSION_DENIED(7), got " + response.status);
+    });
+%}
+
+
+### 21. UpdatePost — несуществующий пост (expect NOT_FOUND)
+GRPC {{host}}/blog.v1.PostEditorService/UpdatePost
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": 999999,
+  "title": "ghost"
+}
+
+> {%
+    client.test("Status is NOT_FOUND (5)", () => {
+        client.assert(response.status === 5, "Expected NOT_FOUND(5), got " + response.status);
+    });
+%}
+
+
+### 22. DeletePost — без токена (expect UNAUTHENTICATED)
+GRPC {{host}}/blog.v1.PostEditorService/DeletePost
+
+{
+  "id": {{post_id}}
+}
+
+> {%
+    client.test("Status is UNAUTHENTICATED (16)", () => {
+        client.assert(response.status === 16, "Expected UNAUTHENTICATED(16), got " + response.status);
+    });
+%}
+
+
+### 23. DeletePost — чужой пост (expect PERMISSION_DENIED)
+GRPC {{host}}/blog.v1.PostEditorService/DeletePost
+Authorization: Bearer {{other_token}}
+
+{
+  "id": {{post_id}}
+}
+
+> {%
+    client.test("Status is PERMISSION_DENIED (7)", () => {
+        client.assert(response.status === 7, "Expected PERMISSION_DENIED(7), got " + response.status);
+    });
+%}
+
+
+### 24. DeletePost — happy path (expect empty response)
+GRPC {{host}}/blog.v1.PostEditorService/DeletePost
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": {{post_id}}
+}
+
+> {%
+    client.test("Response OK (empty body)", () => {
+        // google.protobuf.Empty — тело пустое, статус 0
+        client.assert(response.status === 0 || response.body !== undefined, "Unexpected error");
+    });
+%}
+
+
+### 25. DeletePost — уже удалённый пост (expect NOT_FOUND)
+GRPC {{host}}/blog.v1.PostEditorService/DeletePost
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": {{post_id}}
+}
+
+> {%
+    client.test("Status is NOT_FOUND (5)", () => {
+        client.assert(response.status === 5, "Expected NOT_FOUND(5), got " + response.status);
+    });
+%}
+
+
+### 26. GetPost — удалённый пост (expect NOT_FOUND)
+GRPC {{host}}/blog.v1.PostService/GetPost
+
+{
+  "id": {{post_id}}
+}
+
+> {%
+    client.test("Status is NOT_FOUND (5)", () => {
+        client.assert(response.status === 5, "Expected NOT_FOUND(5), got " + response.status);
+    });
+%}

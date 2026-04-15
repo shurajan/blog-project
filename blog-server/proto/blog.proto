@@ -42,11 +42,14 @@ message User {
 // ============================================================
 
 service PostService {
-  rpc CreatePost (CreatePostRequest) returns (Post);
   rpc GetPost    (GetPostRequest)    returns (Post);
+  rpc ListPosts  (ListPostsRequest)  returns (ListPostsResponse);
+}
+
+service PostEditorService {
+  rpc CreatePost (CreatePostRequest) returns (Post);
   rpc UpdatePost (UpdatePostRequest) returns (Post);
   rpc DeletePost (DeletePostRequest) returns (google.protobuf.Empty);
-  rpc ListPosts  (ListPostsRequest)  returns (ListPostsResponse);
 }
 
 message Post {

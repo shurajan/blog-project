@@ -1,4 +1,3 @@
-
 use crate::domain::error::AppError;
 use crate::domain::post::{NewPost, Post, PostUpdate};
 use sqlx::PgPool;
@@ -34,7 +33,11 @@ impl PostRepository {
         .map_err(AppError::from)?;
 
         tracing::Span::current().record("post_id", post.id);
-        debug!(post_id = post.id, author_id = post.author_id, "post row inserted");
+        debug!(
+            post_id = post.id,
+            author_id = post.author_id,
+            "post row inserted"
+        );
         Ok(post)
     }
 
@@ -88,12 +91,9 @@ impl PostRepository {
 
     #[instrument(skip(self), fields(post_id = id), err)]
     pub async fn delete(&self, id: i64) -> Result<(), AppError> {
-        let result = sqlx::query!(
-            r#"DELETE FROM posts WHERE id = $1"#,
-            id,
-        )
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query!(r#"DELETE FROM posts WHERE id = $1"#, id,)
+            .execute(&self.pool)
+            .await?;
 
         if result.rows_affected() == 0 {
             warn!(post_id = id, "post not found for delete");

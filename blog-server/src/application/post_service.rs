@@ -35,7 +35,11 @@ impl PostService {
             return Err(AppError::Validation("content must not be empty".into()));
         }
 
-        let new_post = NewPost { title, content, author_id };
+        let new_post = NewPost {
+            title,
+            content,
+            author_id,
+        };
         let post = self.post_repo.create(new_post).await?;
 
         tracing::Span::current().record("post_id", post.id);
@@ -111,6 +115,11 @@ impl PostService {
         let (posts, total) =
             tokio::try_join!(self.post_repo.list(limit, offset), self.post_repo.count())?;
 
-        Ok(PostListPage { posts, total, limit, offset })
+        Ok(PostListPage {
+            posts,
+            total,
+            limit,
+            offset,
+        })
     }
 }

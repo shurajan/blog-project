@@ -19,7 +19,12 @@ use crate::infrastructure::database::{create_pool, run_migrations};
 use crate::infrastructure::jwt::JwtService;
 use crate::infrastructure::logging::init_logging;
 use crate::presentation::grpc::auth_service::AuthApi;
+use crate::presentation::grpc::middleware::JwtInterceptor;
+use crate::presentation::grpc::post_editor_service::PostEditorApi;
+use crate::presentation::grpc::post_service::PostApi;
 use crate::presentation::grpc::proto::blog::auth_service_server::AuthServiceServer;
+use crate::presentation::grpc::proto::blog::post_editor_service_server::PostEditorServiceServer;
+use crate::presentation::grpc::proto::blog::post_service_server::PostServiceServer;
 use crate::presentation::rest::auth_http_handlers::{login, register};
 use crate::presentation::rest::middleware::JwtAuthMiddleware;
 use crate::presentation::rest::posts_http_handlers::{
@@ -71,7 +76,7 @@ async fn main() -> Result<(), AppError> {
         let post = post_service.clone();
         let jwt = jwt_service.clone();
         let shutdown = shutdown.clone();
-        async move { ("grpc", run_grpc(auth,post,jwt, shutdown).await) }
+        async move { ("grpc", run_grpc(auth, post, jwt, shutdown).await) }
     });
 
     tokio::select! {
@@ -145,11 +150,7 @@ async fn run_rest(
             .wrap(cors)
             .service(
                 web::scope("/api")
-                    .service(
-                        web::scope("/auth")
-                            .service(register)
-                            .service(login),
-                    )
+                    .service(web::scope("/auth").service(register).service(login))
                     .service(
                         web::scope("/posts")
                             .service(list_posts)
@@ -164,10 +165,10 @@ async fn run_rest(
                     ),
             )
     })
-        .bind(("127.0.0.1", 8080))?
-        .shutdown_timeout(30)
-        .disable_signals()
-        .run();
+    .bind(("127.0.0.1", 8080))?
+    .shutdown_timeout(30)
+    .disable_signals()
+    .run();
 
     let handle = server.handle();
 
@@ -196,13 +197,20 @@ async fn run_grpc(
         .map_err(|e: std::net::AddrParseError| AppError::Config(e.to_string()))?;
 
     let auth_api = AuthApi::new(auth_service);
-    //let post_api = PostApi::new(post_service, jwt_service);
+    let post_api = PostApi::new(post_service.clone());
+    let post_editor_api = PostEditorApi::new(post_service);
+
+    let interceptor = JwtInterceptor::new(jwt_service);
 
     info!(%addr, "grpc: starting server");
 
     Server::builder()
         .add_service(AuthServiceServer::new(auth_api))
-        //.add_service(PostServiceServer::new(post_api))
+        .add_service(PostServiceServer::new(post_api))
+        .add_service(PostEditorServiceServer::with_interceptor(
+            post_editor_api,
+            interceptor,
+        ))
         .serve_with_shutdown(addr, async move {
             shutdown.cancelled().await;
             info!("grpc: shutdown signal received");

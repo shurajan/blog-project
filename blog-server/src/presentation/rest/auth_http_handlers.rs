@@ -1,10 +1,10 @@
-use std::sync::Arc;
 use crate::application::auth_service::AuthService;
 use crate::domain::error::AppError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, HttpResponseBuilder, Responder, post, web};
 use serde::Deserialize;
-use tracing::{debug};
+use std::sync::Arc;
+use tracing::debug;
 
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {

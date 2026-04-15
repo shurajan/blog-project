@@ -18,7 +18,10 @@ pub struct AuthService {
 
 impl AuthService {
     pub fn new(user_repo: UserRepository, jwt_service: Arc<JwtService>) -> Self {
-        Self { user_repo, jwt_service }
+        Self {
+            user_repo,
+            jwt_service,
+        }
     }
 
     #[instrument(
@@ -37,7 +40,11 @@ impl AuthService {
             .map_err(|e| AppError::Internal(e.to_string()))?
             .map_err(|e| AppError::Internal(e.to_string()))?;
 
-        let new_user = NewUser { username, email, password_hash };
+        let new_user = NewUser {
+            username,
+            email,
+            password_hash,
+        };
         let user = self.user_repo.create(new_user).await?;
 
         let token = self
@@ -53,11 +60,12 @@ impl AuthService {
         fields(username = %username, user_id = tracing::field::Empty),
         err,
     )]
-    pub async fn login(&self, username: String, password: String) -> Result<UserAndToken, AppError> {
-        let user = self
-            .user_repo
-            .find_by_username(username.as_str())
-            .await?;
+    pub async fn login(
+        &self,
+        username: String,
+        password: String,
+    ) -> Result<UserAndToken, AppError> {
+        let user = self.user_repo.find_by_username(username.as_str()).await?;
 
         let password = password.to_owned();
         let hash = user.password_hash.clone();
@@ -82,7 +90,9 @@ impl AuthService {
 fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    let hash = argon2.hash_password(password.as_bytes(), &salt)?.to_string();
+    let hash = argon2
+        .hash_password(password.as_bytes(), &salt)?
+        .to_string();
     Ok(hash)
 }
 

@@ -13,3 +13,22 @@ impl From<crate::domain::user::User> for blog::User {
         }
     }
 }
+
+impl From<crate::domain::post::Post> for blog::Post {
+    fn from(p: crate::domain::post::Post) -> Self {
+        blog::Post {
+            id: p.id,
+            author_id: p.author_id,
+            title: p.title,
+            content: p.content,
+            created_at: Some(prost_types::Timestamp {
+                seconds: p.created_at.timestamp(),
+                nanos: p.created_at.timestamp_subsec_nanos() as i32,
+            }),
+            updated_at: Some(prost_types::Timestamp {
+                seconds: p.updated_at.timestamp(),
+                nanos: p.updated_at.timestamp_subsec_nanos() as i32,
+            }),
+        }
+    }
+}

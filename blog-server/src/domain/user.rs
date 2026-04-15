@@ -24,7 +24,6 @@ impl std::fmt::Debug for User {
     }
 }
 
-
 #[derive(Clone)]
 pub struct NewUser {
     pub username: String,
