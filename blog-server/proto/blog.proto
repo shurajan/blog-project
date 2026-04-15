@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package blog.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// ============================================================
+// Auth
+// ============================================================
+
+service AuthService {
+  rpc Register (RegisterRequest) returns (AuthResponse);
+  rpc Login    (LoginRequest)    returns (AuthResponse);
+}
+
+message RegisterRequest {
+  string username = 1;
+  string email    = 2;
+  string password = 3;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthResponse {
+  User   user  = 1;
+  string token = 2;
+}
+
+message User {
+  int64                     id         = 1;
+  string                    username   = 2;
+  string                    email      = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+// ============================================================
+// Posts
+// ============================================================
+
+service PostService {
+  rpc CreatePost (CreatePostRequest) returns (Post);
+  rpc GetPost    (GetPostRequest)    returns (Post);
+  rpc UpdatePost (UpdatePostRequest) returns (Post);
+  rpc DeletePost (DeletePostRequest) returns (google.protobuf.Empty);
+  rpc ListPosts  (ListPostsRequest)  returns (ListPostsResponse);
+}
+
+message Post {
+  int64                     id         = 1;
+  int64                     author_id  = 2;
+  string                    title      = 3;
+  string                    content    = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message CreatePostRequest {
+  string title   = 1;
+  string content = 2;
+}
+
+message GetPostRequest {
+  int64 id = 1;
+}
+
+message UpdatePostRequest {
+  int64           id      = 1;
+  optional string title   = 2;
+  optional string content = 3;
+}
+
+message DeletePostRequest {
+  int64 id = 1;
+}
+
+message ListPostsRequest {
+  optional int64 limit  = 1;
+  optional int64 offset = 2;
+}
+
+message ListPostsResponse {
+  repeated Post posts  = 1;
+  int64         total  = 2;
+  int64         limit  = 3;
+  int64         offset = 4;
+}

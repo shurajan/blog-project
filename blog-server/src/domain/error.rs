@@ -47,6 +47,7 @@ pub enum AppError {
 
 use actix_web::{HttpResponse, ResponseError, http::StatusCode};
 use serde_json::json;
+use tonic::Status;
 
 impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
@@ -75,5 +76,26 @@ impl ResponseError for AppError {
             "error": message,
             "status": status.as_u16(),
         }))
+    }
+}
+
+impl From<AppError> for Status {
+    fn from(e: AppError) -> Self {
+        match e {
+            AppError::UserNotFound { .. }
+            | AppError::PostNotFound { .. }      => Status::not_found(e.to_string()),
+
+            AppError::InvalidCredentials
+            | AppError::Unauthorized
+            | AppError::Jwt(_)                   => Status::unauthenticated(e.to_string()),
+
+            AppError::Forbidden                  => Status::permission_denied(e.to_string()),
+
+            AppError::UserAlreadyExists          => Status::already_exists(e.to_string()),
+
+            AppError::Validation(_)              => Status::invalid_argument(e.to_string()),
+
+            _                                    => Status::internal("internal server error".to_string()),
+        }
     }
 }

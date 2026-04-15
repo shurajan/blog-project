@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use crate::application::auth_service::AuthService;
 use crate::application::post_service::PostService;
 use crate::data::post_repository::PostRepository;
@@ -16,8 +17,14 @@ use actix_web::{App, HttpServer, web};
 use std::sync::Arc;
 use tokio::task::JoinSet;
 use tokio_util::sync::CancellationToken;
+use tonic::transport::Server;
 use tracing::{error, info, warn};
+use crate::presentation::grpc::proto::blog::auth_service_server::AuthServiceServer;
 use crate::presentation::posts_http_handlers::{create_post, delete_post, get_post, list_posts, update_post};
+
+use crate::presentation::grpc::auth_service::{
+    AuthApi,
+};
 
 mod application;
 mod data;
@@ -60,9 +67,11 @@ async fn main() -> Result<(), AppError> {
 
     // gRPC
     tasks.spawn({
+        let auth = auth_service.clone();
         let post = post_service.clone();
+        let jwt = jwt_service.clone();
         let shutdown = shutdown.clone();
-        async move { ("grpc", run_grpc(post, shutdown).await) }
+        async move { ("grpc", run_grpc(auth,post,jwt, shutdown).await) }
     });
 
     tokio::select! {
@@ -177,11 +186,30 @@ async fn run_rest(
 }
 
 async fn run_grpc(
+    auth_service: Arc<AuthService>,
     post_service: Arc<PostService>,
+    jwt_service: Arc<JwtService>,
     shutdown: CancellationToken,
 ) -> Result<(), AppError> {
-    // TODO: ваша инициализация tonic-сервера
-    shutdown.cancelled().await;
-    info!("grpc: shutdown signal received (stub)");
+    let addr: SocketAddr = "0.0.0.0:50051"
+        .parse()
+        .map_err(|e: std::net::AddrParseError| AppError::Config(e.to_string()))?;
+
+    let auth_api = AuthApi::new(auth_service);
+    //let post_api = PostApi::new(post_service, jwt_service);
+
+    info!(%addr, "grpc: starting server");
+
+    Server::builder()
+        .add_service(AuthServiceServer::new(auth_api))
+        //.add_service(PostServiceServer::new(post_api))
+        .serve_with_shutdown(addr, async move {
+            shutdown.cancelled().await;
+            info!("grpc: shutdown signal received");
+        })
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+
+    info!("grpc: server stopped");
     Ok(())
 }
