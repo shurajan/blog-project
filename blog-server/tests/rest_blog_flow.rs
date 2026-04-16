@@ -9,6 +9,13 @@ use testcontainers_modules::postgres::Postgres;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
+fn test_config(database_url: String) -> AppConfig {
+    AppConfig {
+        database_url,
+        jwt_secret: "test-secret".into(),
+    }
+}
+
 fn unique_suffix() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -38,10 +45,7 @@ struct SpawnedApp {
 }
 
 async fn spawn_app(database_url: String, http_port: u16, grpc_port: u16) -> SpawnedApp {
-    let config = AppConfig::from_env()
-        .expect("config")
-        .with_database_url(database_url)
-        .with_jwt_secret("test-secret".into());
+    let config = test_config(database_url.clone());
 
     let shutdown = CancellationToken::new();
     let app_shutdown = shutdown.clone();
@@ -108,7 +112,7 @@ async fn rest_blog_flow() {
     assert_eq!(resp.status(), StatusCode::CREATED);
     let body: Value = resp.json().await.expect("invalid register alice json");
 
-    let auth_token = body["token"]
+    let _auth_token = body["token"]
         .as_str()
         .expect("no token in register response")
         .to_string();

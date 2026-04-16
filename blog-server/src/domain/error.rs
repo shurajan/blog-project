@@ -1,4 +1,3 @@
-use std::fmt::{Display, Formatter};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -26,7 +25,6 @@ pub enum AppError {
 
     // #[error("user \"{username}\" not found")]
     // UserNotFound { username: String },
-
     #[error("user with the same username or/and email already registered")]
     UserAlreadyExists,
 
@@ -85,12 +83,12 @@ impl From<AppError> for Status {
             AppError::PostNotFound { .. } => Status::not_found(e.to_string()),
 
             AppError::UserAlreadyExists => Status::already_exists(e.to_string()),
-            AppError::InvalidCredentials
-            | AppError::Unauthorized
-            | AppError::Jwt(_) => Status::unauthenticated(e.to_string()),
+            AppError::InvalidCredentials | AppError::Unauthorized | AppError::Jwt(_) => {
+                Status::unauthenticated(e.to_string())
+            }
 
             AppError::Forbidden => Status::permission_denied(e.to_string()),
-            
+
             AppError::Validation(_) => Status::invalid_argument(e.to_string()),
 
             _ => Status::internal("internal server error".to_string()),

@@ -32,6 +32,13 @@ fn with_auth<T>(token: &str, body: T) -> Request<T> {
     req
 }
 
+fn test_config(database_url: String) -> AppConfig {
+    AppConfig {
+        database_url,
+        jwt_secret: "test-secret".into(),
+    }
+}
+
 async fn wait_for_grpc_ready(addr: &str) {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
 
@@ -57,10 +64,7 @@ struct SpawnedApp {
 }
 
 async fn spawn_app(database_url: String, http_port: u16, grpc_port: u16) -> SpawnedApp {
-    let config = AppConfig::from_env()
-        .expect("config")
-        .with_database_url(database_url)
-        .with_jwt_secret("test-secret".into());
+    let config = test_config(database_url.clone());
 
     let shutdown = CancellationToken::new();
     let app_shutdown = shutdown.clone();
@@ -133,8 +137,6 @@ async fn grpc_blog_flow() {
     let user = register.user.expect("user missing");
     assert!(user.id > 0, "user.id must be > 0");
 
-    let mut auth_token = register.token;
-
     let err = auth
         .register(RegisterRequest {
             username: username.clone(),
@@ -155,7 +157,7 @@ async fn grpc_blog_flow() {
         .into_inner();
 
     assert!(!login.token.is_empty(), "login token is empty");
-    auth_token = login.token;
+    let auth_token = login.token;
 
     let err = auth
         .login(LoginRequest {

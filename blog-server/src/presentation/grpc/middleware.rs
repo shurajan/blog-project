@@ -9,15 +9,11 @@ use crate::infrastructure::jwt::{Claims, JwtService};
 #[derive(Debug, Clone)]
 pub struct AuthUser {
     pub id: i64,
-    pub username: String,
 }
 
 impl From<Claims> for AuthUser {
     fn from(claims: Claims) -> Self {
-        Self {
-            id: claims.user_id,
-            username: claims.username,
-        }
+        Self { id: claims.user_id }
     }
 }
 
