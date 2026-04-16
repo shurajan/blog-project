@@ -1,12 +1,13 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use blog_server::app::run_app;
-use blog_server::infrastructure::config::AppConfig;
-use blog_server::presentation::grpc::proto::blog::{
+use blog_grpc::{
     CreatePostRequest, DeletePostRequest, GetPostRequest, ListPostsRequest, LoginRequest,
     RegisterRequest, UpdatePostRequest, auth_service_client::AuthServiceClient,
     post_editor_service_client::PostEditorServiceClient, post_service_client::PostServiceClient,
 };
+use blog_server::app::run_app;
+use blog_server::infrastructure::config::AppConfig;
+
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres;
 use tokio::task::JoinHandle;

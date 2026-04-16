@@ -1,8 +1,6 @@
-use crate::presentation::grpc::proto::blog;
-
-impl From<crate::domain::user::User> for blog::User {
+impl From<crate::domain::user::User> for blog_grpc::User {
     fn from(u: crate::domain::user::User) -> Self {
-        blog::User {
+        blog_grpc::User {
             id: u.id,
             username: u.username,
             email: u.email,
@@ -14,9 +12,9 @@ impl From<crate::domain::user::User> for blog::User {
     }
 }
 
-impl From<crate::domain::post::Post> for blog::Post {
+impl From<crate::domain::post::Post> for blog_grpc::Post {
     fn from(p: crate::domain::post::Post) -> Self {
-        blog::Post {
+        blog_grpc::Post {
             id: p.id,
             author_id: p.author_id,
             title: p.title,

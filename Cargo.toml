@@ -5,7 +5,7 @@ members = [
     "blog-client",
     "blog-cli",
     "blog-wasm"
-]
+, "blog-grpc"]
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"]}

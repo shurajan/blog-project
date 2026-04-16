@@ -1,10 +1,7 @@
+use blog_grpc::post_service_server::PostService;
+use blog_grpc::{GetPostRequest, ListPostsRequest, ListPostsResponse, Post};
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
-
-use crate::presentation::grpc::proto::blog::post_service_server::PostService;
-use crate::presentation::grpc::proto::blog::{
-    GetPostRequest, ListPostsRequest, ListPostsResponse, Post,
-};
 
 pub struct PostApi {
     service: Arc<crate::application::post_service::PostService>,

@@ -1,0 +1,13 @@
+[package]
+name = "blog-grpc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+prost.workspace = true
+tonic.workspace = true
+prost-types.workspace = true
+tonic-prost.workspace = true
+
+[build-dependencies]
+tonic-prost-build.workspace = true

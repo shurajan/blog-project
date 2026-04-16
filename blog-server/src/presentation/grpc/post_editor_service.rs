@@ -1,12 +1,9 @@
+use crate::presentation::grpc::middleware::AuthUser;
+use blog_grpc::post_editor_service_server::PostEditorService;
+use blog_grpc::{CreatePostRequest, DeletePostRequest, Post, UpdatePostRequest};
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use tracing::debug;
-
-use crate::presentation::grpc::middleware::AuthUser;
-use crate::presentation::grpc::proto::blog::post_editor_service_server::PostEditorService;
-use crate::presentation::grpc::proto::blog::{
-    CreatePostRequest, DeletePostRequest, Post, UpdatePostRequest,
-};
 
 pub struct PostEditorApi {
     service: Arc<crate::application::post_service::PostService>,

@@ -1,5 +1,5 @@
-use crate::presentation::grpc::proto::blog::auth_service_server::AuthService;
-use crate::presentation::grpc::proto::blog::{AuthResponse, LoginRequest, RegisterRequest};
+use blog_grpc::auth_service_server::AuthService;
+use blog_grpc::{AuthResponse, LoginRequest, RegisterRequest};
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use tracing::debug;
