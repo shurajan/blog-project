@@ -101,7 +101,7 @@ async fn grpc_blog_flow() {
 
     let database_url = format!("postgres://postgres:postgres@127.0.0.1:{db_port}/postgres");
 
-    let app = spawn_app(database_url, 18080, 15051).await;
+    let app = spawn_app(database_url, 18081, 15052).await;
 
     let suffix = unique_suffix();
     let username = format!("alice_{suffix}");

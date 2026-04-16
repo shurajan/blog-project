@@ -1,14 +1,22 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+pub mod client;
+pub mod error;
+pub mod model;
+mod transport;
+
+pub use client::BlogClient;
+pub use error::ClientError;
+pub use model::*;
+pub use transport::*;
+
+#[derive(Debug, Clone)]
+pub enum Transport {
+    Http { base_url: String },
+    Grpc { endpoint: String },
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+pub async fn connect(cfg: Transport) -> Result<Box<dyn BlogClient>, ClientError> {
+    match cfg {
+        Transport::Http { base_url } => Err(ClientError::Conflict),
+        Transport::Grpc { endpoint } => Ok(Box::new(grpc::GrpcClient::connect(&endpoint).await?)),
     }
 }

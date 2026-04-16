@@ -30,5 +30,5 @@ tokio-util = "0.7"
 tonic = { version = "0.14", features = ["transport"] }
 testcontainers = "0.27"
 testcontainers-modules = { version = "0.15", features = ["postgres"] }
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 serde_json = "1"
