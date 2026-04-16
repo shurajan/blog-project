@@ -55,9 +55,7 @@ impl UserRepository {
         .await?
         .ok_or_else(|| {
             warn!(username = %username, "user not found");
-            AppError::UserNotFound {
-                username: username.to_string(),
-            }
+            AppError::InvalidCredentials
         })?;
 
         debug!(user_id = user.id, username = %user.username, "user found");

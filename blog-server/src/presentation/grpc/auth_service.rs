@@ -44,7 +44,7 @@ impl AuthService for AuthApi {
         let user_and_token = self.service.login(username, password).await?;
         debug!(user_id = %user_and_token.user.id,  "user logged in");
         let auth_response = AuthResponse {
-            user: None,
+            user: Some(user_and_token.user.into()),
             token: user_and_token.token,
         };
         Ok(Response::new(auth_response))

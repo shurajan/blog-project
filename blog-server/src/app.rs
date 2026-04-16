@@ -161,7 +161,7 @@ async fn run_rest(
                     ),
             )
     })
-    .bind(("127.0.0.1", port))?
+    .bind(("0.0.0.0", port))?
     .shutdown_timeout(30)
     .disable_signals()
     .run();
@@ -189,7 +189,7 @@ async fn run_grpc(
     jwt_service: Arc<JwtService>,
     shutdown: CancellationToken,
 ) -> Result<(), AppError> {
-    let addr: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port);
+    let addr: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
 
     let auth_api = AuthApi::new(auth_service);
     let post_api = PostApi::new(post_service.clone());

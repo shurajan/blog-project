@@ -24,8 +24,8 @@ pub enum AppError {
     #[error("invalid datetime on server")]
     InvalidDatetime,
 
-    #[error("user \"{username}\" not found")]
-    UserNotFound { username: String },
+    // #[error("user \"{username}\" not found")]
+    // UserNotFound { username: String },
 
     #[error("user with the same username or/and email already registered")]
     UserAlreadyExists,
@@ -54,7 +54,6 @@ impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match self {
             AppError::UserAlreadyExists => StatusCode::CONFLICT,
-            AppError::UserNotFound { .. } => StatusCode::UNAUTHORIZED,
             AppError::InvalidCredentials => StatusCode::UNAUTHORIZED,
             AppError::Unauthorized => StatusCode::UNAUTHORIZED,
             AppError::Jwt(_) => StatusCode::UNAUTHORIZED,
@@ -85,15 +84,13 @@ impl From<AppError> for Status {
         match e {
             AppError::PostNotFound { .. } => Status::not_found(e.to_string()),
 
-            AppError::UserNotFound { .. }
-            | AppError::InvalidCredentials
+            AppError::UserAlreadyExists => Status::already_exists(e.to_string()),
+            AppError::InvalidCredentials
             | AppError::Unauthorized
             | AppError::Jwt(_) => Status::unauthenticated(e.to_string()),
 
             AppError::Forbidden => Status::permission_denied(e.to_string()),
-
-            AppError::UserAlreadyExists => Status::already_exists(e.to_string()),
-
+            
             AppError::Validation(_) => Status::invalid_argument(e.to_string()),
 
             _ => Status::internal("internal server error".to_string()),

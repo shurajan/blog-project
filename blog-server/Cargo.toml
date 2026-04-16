@@ -24,8 +24,6 @@ actix-cors = "0.7"
 tokio-util = "0.7.18"
 futures-util = "0.3.32"
 clap = { version = "4.6.0", features = ["derive"] }
-testcontainers = "0.27.2"
-testcontainers-modules = "0.15.0"
 
 [build-dependencies]
 tonic-prost-build.workspace = true

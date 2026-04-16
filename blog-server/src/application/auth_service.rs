@@ -49,7 +49,7 @@ impl AuthService {
 
         let token = self
             .jwt_service
-            .generate_token(user.id.clone(), user.username.clone())?;
+            .generate_token(user.id, user.username.clone())?;
 
         debug!(user_id = %user.id, "user registered");
         Ok(UserAndToken { user, token })
