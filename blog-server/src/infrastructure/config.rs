@@ -9,6 +9,7 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
+    /// Loads application settings from the environment and optional `.env` file.
     pub fn from_env() -> Result<Self, AppError> {
         info!("loading config");
         dotenvy::dotenv().ok();

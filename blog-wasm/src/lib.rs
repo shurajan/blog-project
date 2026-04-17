@@ -67,6 +67,7 @@ struct UpdatePostRequest {
 }
 
 #[wasm_bindgen(start)]
+/// Boots the browser client, installs panic hooks, and renders the initial UI.
 pub fn main() {
     console_error_panic_hook::set_once();
     spawn_local(async {

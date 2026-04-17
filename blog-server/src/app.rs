@@ -55,6 +55,7 @@ async fn build_app_state(config: &AppConfig) -> Result<AppState, AppError> {
     })
 }
 
+/// Starts the REST and gRPC servers and keeps them running until shutdown is requested.
 pub async fn run_app(
     config: AppConfig,
     http_port: u16,

@@ -65,6 +65,7 @@ pub struct HttpClient {
 }
 
 impl HttpClient {
+    /// Creates an HTTP client and verifies connectivity with the `/health` endpoint.
     pub async fn connect(url: &str) -> Result<Self, ClientError> {
         let base_url = Url::parse(url).map_err(|e| ClientError::Transport(e.to_string()))?;
         let http = Client::new();

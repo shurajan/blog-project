@@ -2,6 +2,7 @@ use crate::domain::error::AppError;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tracing::info;
 
+/// Creates a PostgreSQL connection pool for the provided database URL.
 pub async fn create_pool(database_url: &str) -> Result<PgPool, AppError> {
     let pool = PgPoolOptions::new()
         .max_connections(10)
@@ -13,6 +14,7 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool, AppError> {
     Ok(pool)
 }
 
+/// Applies all pending SQLx migrations using the provided connection pool.
 pub async fn run_migrations(pool: &PgPool) -> Result<(), AppError> {
     info!("running database migrations");
     sqlx::migrate!().run(pool).await?;

@@ -1,6 +1,7 @@
 use crate::domain::error::AppError;
 use tracing_subscriber::{EnvFilter, fmt};
 
+/// Initializes the global JSON tracing subscriber from `RUST_LOG` or a default `info` filter.
 pub fn init_logging() -> Result<(), AppError> {
     let filter = EnvFilter::try_from_default_env()
         .or_else(|_| EnvFilter::try_new("info"))

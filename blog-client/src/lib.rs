@@ -14,6 +14,7 @@ pub enum Transport {
     Grpc { endpoint: String },
 }
 
+/// Connects to the blog service using the selected transport and returns a boxed client.
 pub async fn connect(cfg: Transport) -> Result<Box<dyn BlogClient>, ClientError> {
     match cfg {
         Transport::Http { base_url } => Ok(Box::new(http::HttpClient::connect(&base_url).await?)),

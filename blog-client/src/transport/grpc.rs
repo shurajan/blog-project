@@ -10,6 +10,7 @@ pub struct GrpcClient {
 }
 
 impl GrpcClient {
+    /// Creates a gRPC client by opening a channel to the provided endpoint.
     pub async fn connect(endpoint: &str) -> Result<Self, ClientError> {
         let ch = Channel::from_shared(endpoint.to_string())
             .map_err(|e| ClientError::Transport(e.to_string()))?

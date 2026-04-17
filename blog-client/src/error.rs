@@ -48,6 +48,7 @@ impl From<reqwest::Error> for ClientError {
     }
 }
 
+/// Converts an HTTP status code into a client-facing result.
 pub fn map_status(status: StatusCode) -> Result<(), ClientError> {
     match status {
         s if s.is_success() => Ok(()),

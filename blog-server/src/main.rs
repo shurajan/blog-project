@@ -1,5 +1,5 @@
-use clap::Parser;
 use blog_server::{AppConfig, AppError, init_logging, run_app};
+use clap::Parser;
 use tokio_util::sync::CancellationToken;
 use tracing::info;
 
