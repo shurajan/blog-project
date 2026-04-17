@@ -8,20 +8,20 @@ use crate::domain::error::AppError;
 static TOKEN_LIFETIME: TimeDelta = TimeDelta::days(1);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Claims {
-    pub user_id: i64,
-    pub username: String,
-    pub exp: i64,
-    pub iat: i64,
+pub(crate) struct Claims {
+    pub(crate) user_id: i64,
+    pub(crate) username: String,
+    pub(crate) exp: i64,
+    pub(crate) iat: i64,
 }
 
-pub struct JwtService {
+pub(crate) struct JwtService {
     encoding_key: EncodingKey,
     decoding_key: DecodingKey,
 }
 
 impl JwtService {
-    pub fn new(secret: &str) -> Self {
+    pub(crate) fn new(secret: &str) -> Self {
         let secret_bytes = secret.as_bytes();
         JwtService {
             encoding_key: EncodingKey::from_secret(secret_bytes),
@@ -29,7 +29,11 @@ impl JwtService {
         }
     }
 
-    pub fn generate_token(&self, user_id: i64, username: String) -> Result<String, AppError> {
+    pub(crate) fn generate_token(
+        &self,
+        user_id: i64,
+        username: String,
+    ) -> Result<String, AppError> {
         let now = Utc::now();
         let expiration_time = now
             .checked_add_signed(TOKEN_LIFETIME)
@@ -47,7 +51,7 @@ impl JwtService {
         encode(&Header::default(), &claims, &self.encoding_key).map_err(AppError::from)
     }
 
-    pub fn verify_token(&self, token: &str) -> Result<Claims, AppError> {
+    pub(crate) fn verify_token(&self, token: &str) -> Result<Claims, AppError> {
         let validation = Validation::default();
         decode::<Claims>(token, &self.decoding_key, &validation)
             .map(|data| data.claims)

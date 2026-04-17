@@ -3,12 +3,12 @@ use blog_grpc::{GetPostRequest, ListPostsRequest, ListPostsResponse, Post};
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
-pub struct PostApi {
+pub(crate) struct PostApi {
     service: Arc<crate::application::post_service::PostService>,
 }
 
 impl PostApi {
-    pub fn new(service: Arc<crate::application::post_service::PostService>) -> Self {
+    pub(crate) fn new(service: Arc<crate::application::post_service::PostService>) -> Self {
         Self { service }
     }
 }

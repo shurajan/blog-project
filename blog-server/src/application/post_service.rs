@@ -8,12 +8,12 @@ const MAX_PAGE_SIZE: i64 = 100;
 const DEFAULT_PAGE_SIZE: i64 = 10;
 
 #[derive(Clone)]
-pub struct PostService {
+pub(crate) struct PostService {
     post_repo: PostRepository,
 }
 
 impl PostService {
-    pub fn new(post_repo: PostRepository) -> Self {
+    pub(crate) fn new(post_repo: PostRepository) -> Self {
         Self { post_repo }
     }
 
@@ -22,7 +22,7 @@ impl PostService {
         fields(author_id = %author_id, post_id = tracing::field::Empty),
         err,
     )]
-    pub async fn create(
+    pub(crate) async fn create(
         &self,
         author_id: i64,
         title: String,
@@ -48,7 +48,7 @@ impl PostService {
     }
 
     #[instrument(skip(self), fields(post_id = %id), err)]
-    pub async fn get(&self, id: i64) -> Result<Post, AppError> {
+    pub(crate) async fn get(&self, id: i64) -> Result<Post, AppError> {
         self.post_repo.find_by_id(id).await
     }
 
@@ -57,7 +57,7 @@ impl PostService {
         fields(post_id = %id, user_id = %user_id),
         err,
     )]
-    pub async fn update(
+    pub(crate) async fn update(
         &self,
         id: i64,
         user_id: i64,
@@ -91,7 +91,7 @@ impl PostService {
     }
 
     #[instrument(skip(self), fields(post_id = %id, user_id = %user_id), err)]
-    pub async fn delete(&self, id: i64, user_id: i64) -> Result<(), AppError> {
+    pub(crate) async fn delete(&self, id: i64, user_id: i64) -> Result<(), AppError> {
         let existing = self.post_repo.find_by_id(id).await?;
         if existing.author_id != user_id {
             return Err(AppError::Forbidden);
@@ -104,7 +104,7 @@ impl PostService {
     }
 
     #[instrument(skip(self), fields(limit = ?limit, offset = ?offset), err)]
-    pub async fn list(
+    pub(crate) async fn list(
         &self,
         limit: Option<i64>,
         offset: Option<i64>,

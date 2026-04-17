@@ -1,6 +1,8 @@
 pub mod app;
-pub mod application;
-pub mod data;
-pub mod domain;
-pub mod infrastructure;
-pub mod presentation;
+mod application;
+mod data;
+mod domain;
+mod infrastructure;
+mod presentation;
+
+pub use infrastructure::config::AppConfig;

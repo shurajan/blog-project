@@ -30,13 +30,13 @@ use tonic::transport::Server;
 use tracing::{error, info, warn};
 
 #[derive(Clone)]
-pub struct AppState {
-    pub auth_service: Arc<AuthService>,
-    pub post_service: Arc<PostService>,
-    pub jwt_service: Arc<JwtService>,
+struct AppState {
+    auth_service: Arc<AuthService>,
+    post_service: Arc<PostService>,
+    jwt_service: Arc<JwtService>,
 }
 
-pub async fn build_app_state(config: &AppConfig) -> Result<AppState, AppError> {
+async fn build_app_state(config: &AppConfig) -> Result<AppState, AppError> {
     let pool = create_pool(&config.database_url).await?;
     run_migrations(&pool).await?;
 
@@ -66,7 +66,7 @@ pub async fn run_app(
     run_app_with_state(state, http_port, grpc_port, shutdown).await
 }
 
-pub async fn run_app_with_state(
+async fn run_app_with_state(
     state: AppState,
     http_port: u16,
     grpc_port: u16,

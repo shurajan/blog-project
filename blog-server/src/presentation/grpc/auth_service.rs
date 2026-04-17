@@ -4,12 +4,12 @@ use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use tracing::debug;
 
-pub struct AuthApi {
+pub(crate) struct AuthApi {
     service: Arc<crate::application::auth_service::AuthService>,
 }
 
 impl AuthApi {
-    pub fn new(service: Arc<crate::application::auth_service::AuthService>) -> Self {
+    pub(crate) fn new(service: Arc<crate::application::auth_service::AuthService>) -> Self {
         Self { service }
     }
 }

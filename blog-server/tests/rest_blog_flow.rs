@@ -1,7 +1,7 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use blog_server::AppConfig;
 use blog_server::app::run_app;
-use blog_server::infrastructure::config::AppConfig;
 use reqwest::{Client, StatusCode};
 use serde_json::{Value, json};
 use testcontainers::runners::AsyncRunner;

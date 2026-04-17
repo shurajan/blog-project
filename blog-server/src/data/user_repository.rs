@@ -4,18 +4,18 @@ use sqlx::PgPool;
 use tracing::{debug, instrument, warn};
 
 #[derive(Clone)]
-pub struct UserRepository {
+pub(crate) struct UserRepository {
     pool: PgPool,
 }
 
 impl UserRepository {
-    pub fn new(pool: PgPool) -> Self {
+    pub(crate) fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }
 impl UserRepository {
     #[instrument(skip(self, new), fields(username = %new.username), err)]
-    pub async fn create(&self, new: NewUser) -> Result<User, AppError> {
+    pub(crate) async fn create(&self, new: NewUser) -> Result<User, AppError> {
         const DUPLICATE_CODE: &str = "23505";
 
         let result = sqlx::query_as!(
@@ -44,7 +44,7 @@ impl UserRepository {
     }
 
     #[instrument(skip(self), fields(username = %username), err)]
-    pub async fn find_by_username(&self, username: &str) -> Result<User, AppError> {
+    pub(crate) async fn find_by_username(&self, username: &str) -> Result<User, AppError> {
         let user = sqlx::query_as!(
             User,
             r#"SELECT id, username, email, password_hash, created_at

@@ -5,12 +5,12 @@ use std::sync::Arc;
 use tonic::{Request, Response, Status};
 use tracing::debug;
 
-pub struct PostEditorApi {
+pub(crate) struct PostEditorApi {
     service: Arc<crate::application::post_service::PostService>,
 }
 
 impl PostEditorApi {
-    pub fn new(service: Arc<crate::application::post_service::PostService>) -> Self {
+    pub(crate) fn new(service: Arc<crate::application::post_service::PostService>) -> Self {
         Self { service }
     }
 }

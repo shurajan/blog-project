@@ -13,8 +13,8 @@ use crate::domain::error::AppError;
 use crate::infrastructure::jwt::{Claims, JwtService};
 
 #[derive(Debug, Clone)]
-pub struct AuthUser {
-    pub id: i64,
+pub(crate) struct AuthUser {
+    pub(crate) id: i64,
 }
 
 impl From<Claims> for AuthUser {
@@ -37,12 +37,12 @@ impl FromRequest for AuthUser {
     }
 }
 
-pub struct JwtAuthMiddleware {
+pub(crate) struct JwtAuthMiddleware {
     jwt_service: Arc<JwtService>,
 }
 
 impl JwtAuthMiddleware {
-    pub fn new(jwt_service: Arc<JwtService>) -> Self {
+    pub(crate) fn new(jwt_service: Arc<JwtService>) -> Self {
         Self { jwt_service }
     }
 }
@@ -66,7 +66,7 @@ where
     }
 }
 
-pub struct JwtAuthMiddlewareService<S> {
+pub(crate) struct JwtAuthMiddlewareService<S> {
     service: Rc<S>,
     jwt_service: Arc<JwtService>,
 }

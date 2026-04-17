@@ -4,19 +4,19 @@ use sqlx::PgPool;
 use tracing::{debug, instrument, warn};
 
 #[derive(Clone)]
-pub struct PostRepository {
+pub(crate) struct PostRepository {
     pool: PgPool,
 }
 
 impl PostRepository {
-    pub fn new(pool: PgPool) -> Self {
+    pub(crate) fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }
 
 impl PostRepository {
     #[instrument(skip(self, new), fields(author_id = new.author_id, post_id = tracing::field::Empty), err)]
-    pub async fn create(&self, new: NewPost) -> Result<Post, AppError> {
+    pub(crate) async fn create(&self, new: NewPost) -> Result<Post, AppError> {
         let post = sqlx::query_as!(
             Post,
             r#"
@@ -42,7 +42,7 @@ impl PostRepository {
     }
 
     #[instrument(skip(self), fields(post_id = id), err)]
-    pub async fn find_by_id(&self, id: i64) -> Result<Post, AppError> {
+    pub(crate) async fn find_by_id(&self, id: i64) -> Result<Post, AppError> {
         let post = sqlx::query_as!(
             Post,
             r#"
@@ -63,7 +63,7 @@ impl PostRepository {
     }
 
     #[instrument(skip(self, patch), fields(post_id = id), err)]
-    pub async fn update(&self, id: i64, patch: PostUpdate) -> Result<Post, AppError> {
+    pub(crate) async fn update(&self, id: i64, patch: PostUpdate) -> Result<Post, AppError> {
         let post = sqlx::query_as!(
             Post,
             r#"
@@ -90,7 +90,7 @@ impl PostRepository {
     }
 
     #[instrument(skip(self), fields(post_id = id), err)]
-    pub async fn delete(&self, id: i64) -> Result<(), AppError> {
+    pub(crate) async fn delete(&self, id: i64) -> Result<(), AppError> {
         let result = sqlx::query!(r#"DELETE FROM posts WHERE id = $1"#, id,)
             .execute(&self.pool)
             .await?;
@@ -105,7 +105,7 @@ impl PostRepository {
     }
 
     #[instrument(skip(self), fields(limit, offset), err)]
-    pub async fn list(&self, limit: i64, offset: i64) -> Result<Vec<Post>, AppError> {
+    pub(crate) async fn list(&self, limit: i64, offset: i64) -> Result<Vec<Post>, AppError> {
         let posts = sqlx::query_as!(
             Post,
             r#"
@@ -126,7 +126,7 @@ impl PostRepository {
     }
 
     #[instrument(skip(self), err)]
-    pub async fn count(&self) -> Result<i64, AppError> {
+    pub(crate) async fn count(&self) -> Result<i64, AppError> {
         let row = sqlx::query!(r#"SELECT COUNT(*) as "count!" FROM posts"#)
             .fetch_one(&self.pool)
             .await?;

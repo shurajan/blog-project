@@ -1,2 +1,2 @@
-pub mod grpc;
-pub mod rest;
+pub(crate) mod grpc;
+pub(crate) mod rest;

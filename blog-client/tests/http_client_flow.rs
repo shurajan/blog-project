@@ -2,8 +2,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use blog_client::error::ClientError;
 use blog_client::{AuthToken, PostPatch, Transport, connect};
+use blog_server::AppConfig;
 use blog_server::app::run_app;
-use blog_server::infrastructure::config::AppConfig;
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres;
 use tokio::task::JoinHandle;

@@ -11,13 +11,13 @@ use argon2::{
 };
 
 #[derive(Clone)]
-pub struct AuthService {
+pub(crate) struct AuthService {
     user_repo: UserRepository,
     jwt_service: Arc<JwtService>,
 }
 
 impl AuthService {
-    pub fn new(user_repo: UserRepository, jwt_service: Arc<JwtService>) -> Self {
+    pub(crate) fn new(user_repo: UserRepository, jwt_service: Arc<JwtService>) -> Self {
         Self {
             user_repo,
             jwt_service,
@@ -29,7 +29,7 @@ impl AuthService {
         fields(username = %username, user_id = tracing::field::Empty),
         err,
     )]
-    pub async fn register(
+    pub(crate) async fn register(
         &self,
         username: String,
         email: String,
@@ -60,7 +60,7 @@ impl AuthService {
         fields(username = %username, user_id = tracing::field::Empty),
         err,
     )]
-    pub async fn login(
+    pub(crate) async fn login(
         &self,
         username: String,
         password: String,

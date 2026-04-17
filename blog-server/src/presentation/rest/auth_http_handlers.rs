@@ -7,20 +7,20 @@ use std::sync::Arc;
 use tracing::debug;
 
 #[derive(Debug, Deserialize)]
-pub struct RegisterRequest {
-    pub username: String,
-    pub email: String,
-    pub password: String,
+struct RegisterRequest {
+    username: String,
+    email: String,
+    password: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct LoginRequest {
-    pub username: String,
-    pub password: String,
+struct LoginRequest {
+    username: String,
+    password: String,
 }
 
 #[post("/register")]
-async fn register(
+pub(crate) async fn register(
     service: web::Data<Arc<AuthService>>,
     payload: web::Json<RegisterRequest>,
 ) -> Result<impl Responder, AppError> {
@@ -37,7 +37,7 @@ async fn register(
 }
 
 #[post("/login")]
-async fn login(
+pub(crate) async fn login(
     service: web::Data<Arc<AuthService>>,
     payload: web::Json<LoginRequest>,
 ) -> Result<impl Responder, AppError> {

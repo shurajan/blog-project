@@ -5,8 +5,8 @@ use blog_grpc::{
     RegisterRequest, UpdatePostRequest, auth_service_client::AuthServiceClient,
     post_editor_service_client::PostEditorServiceClient, post_service_client::PostServiceClient,
 };
+use blog_server::AppConfig;
 use blog_server::app::run_app;
-use blog_server::infrastructure::config::AppConfig;
 
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres;

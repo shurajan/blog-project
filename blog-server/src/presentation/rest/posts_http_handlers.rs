@@ -9,25 +9,25 @@ use std::sync::Arc;
 use tracing::debug;
 
 #[derive(Debug, Deserialize)]
-pub struct CreatePostRequest {
-    pub title: String,
-    pub content: String,
+struct CreatePostRequest {
+    title: String,
+    content: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct UpdatePostRequest {
-    pub title: Option<String>,
-    pub content: Option<String>,
+struct UpdatePostRequest {
+    title: Option<String>,
+    content: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ListPostsQuery {
-    pub limit: Option<i64>,
-    pub offset: Option<i64>,
+struct ListPostsQuery {
+    limit: Option<i64>,
+    offset: Option<i64>,
 }
 
 #[post("")]
-async fn create_post(
+pub(crate) async fn create_post(
     service: web::Data<Arc<PostService>>,
     user: AuthUser,
     payload: web::Json<CreatePostRequest>,
@@ -41,7 +41,7 @@ async fn create_post(
 }
 
 #[get("/{id}")]
-async fn get_post(
+pub(crate) async fn get_post(
     service: web::Data<Arc<PostService>>,
     path: web::Path<i64>,
 ) -> Result<impl Responder, AppError> {
@@ -52,7 +52,7 @@ async fn get_post(
 }
 
 #[put("/{id}")]
-async fn update_post(
+pub(crate) async fn update_post(
     service: web::Data<Arc<PostService>>,
     user: AuthUser,
     path: web::Path<i64>,
@@ -68,7 +68,7 @@ async fn update_post(
 }
 
 #[delete("/{id}")]
-async fn delete_post(
+pub(crate) async fn delete_post(
     service: web::Data<Arc<PostService>>,
     user: AuthUser,
     path: web::Path<i64>,
@@ -82,7 +82,7 @@ async fn delete_post(
 }
 
 #[get("")]
-async fn list_posts(
+pub(crate) async fn list_posts(
     service: web::Data<Arc<PostService>>,
     query: web::Query<ListPostsQuery>,
 ) -> Result<impl Responder, AppError> {

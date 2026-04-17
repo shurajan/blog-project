@@ -7,8 +7,8 @@ use tracing::{debug, warn};
 use crate::infrastructure::jwt::{Claims, JwtService};
 
 #[derive(Debug, Clone)]
-pub struct AuthUser {
-    pub id: i64,
+pub(crate) struct AuthUser {
+    pub(crate) id: i64,
 }
 
 impl From<Claims> for AuthUser {
@@ -18,12 +18,12 @@ impl From<Claims> for AuthUser {
 }
 
 #[derive(Clone)]
-pub struct JwtInterceptor {
+pub(crate) struct JwtInterceptor {
     jwt_service: Arc<JwtService>,
 }
 
 impl JwtInterceptor {
-    pub fn new(jwt_service: Arc<JwtService>) -> Self {
+    pub(crate) fn new(jwt_service: Arc<JwtService>) -> Self {
         Self { jwt_service }
     }
 }

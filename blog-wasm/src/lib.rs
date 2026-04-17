@@ -25,7 +25,6 @@ struct Post {
 #[derive(Debug, Deserialize)]
 struct PostPage {
     posts: Vec<Post>,
-    total: i64,
 }
 
 #[derive(Debug, Deserialize)]
