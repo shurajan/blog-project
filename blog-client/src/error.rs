@@ -34,7 +34,6 @@ impl From<tonic::Status> for ClientError {
     }
 }
 
-
 impl From<reqwest::Error> for ClientError {
     fn from(e: reqwest::Error) -> Self {
         if e.is_connect() {

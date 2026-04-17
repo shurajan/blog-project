@@ -11,6 +11,7 @@ use crate::presentation::grpc::middleware::JwtInterceptor;
 use crate::presentation::grpc::post_editor_service::PostEditorApi;
 use crate::presentation::grpc::post_service::PostApi;
 use crate::presentation::rest::auth_http_handlers::{login, register};
+use crate::presentation::rest::health;
 use crate::presentation::rest::middleware::JwtAuthMiddleware;
 use crate::presentation::rest::posts_http_handlers::{
     create_post, delete_post, get_post, list_posts, update_post,
@@ -27,7 +28,6 @@ use tokio::task::JoinSet;
 use tokio_util::sync::CancellationToken;
 use tonic::transport::Server;
 use tracing::{error, info, warn};
-use crate::presentation::rest::health;
 
 #[derive(Clone)]
 pub struct AppState {

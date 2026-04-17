@@ -70,7 +70,11 @@ impl HttpClient {
         let http = Client::new();
 
         let resp = http
-            .get(base_url.join("/health").map_err(|e| ClientError::Transport(e.to_string()))?)
+            .get(
+                base_url
+                    .join("/health")
+                    .map_err(|e| ClientError::Transport(e.to_string()))?,
+            )
             .send()
             .await?;
 

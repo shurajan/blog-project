@@ -26,7 +26,6 @@ pub struct ListPostsQuery {
     pub offset: Option<i64>,
 }
 
-
 #[post("")]
 async fn create_post(
     service: web::Data<Arc<PostService>>,
