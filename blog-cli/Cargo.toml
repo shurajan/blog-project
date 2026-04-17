@@ -6,5 +6,4 @@ edition = "2024"
 [dependencies]
 blog-client = { path = "../blog-client" }
 tokio.workspace = true
-clap = { version = "4", features = ["derive"] }
-chrono = "0.4"
+clap.workspace = true
