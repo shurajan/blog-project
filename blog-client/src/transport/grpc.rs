@@ -39,6 +39,7 @@ fn ts_to_dt(ts: Option<prost_types::Timestamp>) -> DateTime<Utc> {
         .unwrap_or_default()
 }
 
+
 impl From<blog_grpc::Post> for Post {
     fn from(p: blog_grpc::Post) -> Self {
         Post {
@@ -52,6 +53,7 @@ impl From<blog_grpc::Post> for Post {
     }
 }
 
+// ── Trait impl ─────────────────────────────────────────────────────
 #[async_trait]
 impl BlogClient for GrpcClient {
     async fn register(

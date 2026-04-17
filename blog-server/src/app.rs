@@ -27,6 +27,7 @@ use tokio::task::JoinSet;
 use tokio_util::sync::CancellationToken;
 use tonic::transport::Server;
 use tracing::{error, info, warn};
+use crate::presentation::rest::health;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -143,6 +144,7 @@ async fn run_rest(
             .app_data(jwt_data.clone())
             .wrap(Logger::default())
             .wrap(cors)
+            .service(web::scope("/health").service(health))
             .service(
                 web::scope("/api")
                     .service(web::scope("/auth").service(register).service(login))

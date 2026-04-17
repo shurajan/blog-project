@@ -1,3 +1,4 @@
+use reqwest::StatusCode;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -30,5 +31,32 @@ impl From<tonic::Status> for ClientError {
             tonic::Code::AlreadyExists => ClientError::Conflict,
             _ => ClientError::Transport(s.to_string()),
         }
+    }
+}
+
+
+impl From<reqwest::Error> for ClientError {
+    fn from(e: reqwest::Error) -> Self {
+        if e.is_connect() {
+            ClientError::Transport(format!("connection failed: {e}"))
+        } else if e.is_timeout() {
+            ClientError::Transport(format!("request timed out: {e}"))
+        } else if e.is_decode() {
+            ClientError::Other(format!("invalid response body: {e}"))
+        } else {
+            ClientError::Transport(e.to_string())
+        }
+    }
+}
+
+pub fn map_status(status: StatusCode) -> Result<(), ClientError> {
+    match status {
+        s if s.is_success() => Ok(()),
+        StatusCode::UNAUTHORIZED => Err(ClientError::Unauthorized),
+        StatusCode::FORBIDDEN => Err(ClientError::Forbidden),
+        StatusCode::NOT_FOUND => Err(ClientError::NotFound),
+        StatusCode::CONFLICT => Err(ClientError::Conflict),
+        StatusCode::BAD_REQUEST => Err(ClientError::InvalidArgument("bad request".into())),
+        s => Err(ClientError::Other(format!("unexpected status: {s}"))),
     }
 }

@@ -16,7 +16,7 @@ pub enum Transport {
 
 pub async fn connect(cfg: Transport) -> Result<Box<dyn BlogClient>, ClientError> {
     match cfg {
-        Transport::Http { base_url } => Err(ClientError::Conflict),
+        Transport::Http { base_url } => Ok(Box::new(http::HttpClient::connect(&base_url).await?)),
         Transport::Grpc { endpoint } => Ok(Box::new(grpc::GrpcClient::connect(&endpoint).await?)),
     }
 }
