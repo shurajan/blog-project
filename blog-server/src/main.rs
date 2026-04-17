@@ -1,18 +1,7 @@
 use clap::Parser;
+use blog_server::{AppConfig, AppError, init_logging, run_app};
 use tokio_util::sync::CancellationToken;
 use tracing::info;
-
-use crate::app::run_app;
-use crate::domain::error::AppError;
-use crate::infrastructure::config::AppConfig;
-use crate::infrastructure::logging::init_logging;
-
-mod app;
-mod application;
-mod data;
-mod domain;
-mod infrastructure;
-mod presentation;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
